@@ -1,0 +1,48 @@
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build outputs
+dist/
+.build/
+.netlify/
+.vercel/
+coverage/
+
+# Environment
+.env
+.env.*.local
+!.env.example
+
+# Editor/OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.idea/
+.vscode/*
+!.vscode/settings.json
+*.iml
+
+# Logs
+logs/
+*.log
+*.out
+*.pid
+
+# Database / local dev
+*.db
+*.sqlite
+pgdata/
+.pg_service.conf
+fixtures
+
+# Misc
+*.tgz
+*.zip

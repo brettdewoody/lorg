@@ -1,0 +1,21 @@
+[dev]
+  command = "vite"
+  targetPort = 5173
+  framework = "#custom"
+
+[build]
+  command = "vite build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20.19.0"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  external_node_modules = ["pg","@mapbox/polyline"]
+
+[[redirects]]
+  from = "/auth/strava/callback"
+  to = "/.netlify/functions/auth-strava-callback"
+  status = 200
