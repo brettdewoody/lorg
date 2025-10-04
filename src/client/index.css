@@ -125,6 +125,17 @@ a:hover {
   opacity: 0.45;
 }
 
+.map-frame::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 30% 30%, rgba(63, 216, 166, 0.08), transparent 60%),
+              radial-gradient(circle at 70% 70%, rgba(247, 221, 133, 0.05), transparent 55%),
+              rgba(9, 24, 18, 0.35);
+  mix-blend-mode: multiply;
+}
+
 .map-frame .mapboxgl-canvas {
   image-rendering: pixelated;
   filter: saturate(1.05) contrast(1.05);

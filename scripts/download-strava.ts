@@ -2,12 +2,22 @@ import 'dotenv/config'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const CLIENT_ID = process.env.STRAVA_CLIENT_ID
-const CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET
-const REFRESH_TOKEN = process.env.STRAVA_REFRESH_TOKEN
+const CLIENT_ID = process.env.STRAVA_CLIENT_ID ?? process.env.STRAVA_DEV_CLIENT_ID
+const CLIENT_SECRET = process.env.STRAVA_CLIENT_SECRET ?? process.env.STRAVA_DEV_CLIENT_SECRET
+const REFRESH_TOKEN = process.env.STRAVA_REFRESH_TOKEN ?? process.env.STRAVA_DEV_REFRESH_TOKEN
 
-if (!CLIENT_ID || !CLIENT_SECRET || !REFRESH_TOKEN) {
-  console.error('Missing STRAVA_CLIENT_ID / STRAVA_CLIENT_SECRET / STRAVA_REFRESH_TOKEN in env')
+if (!CLIENT_ID) {
+  console.error('Missing STRAVA_DEV_CLIENT_ID or STRAVA_CLIENT_ID in the environment')
+  process.exit(1)
+}
+
+if (!CLIENT_SECRET) {
+  console.error('Missing STRAVA_DEV_CLIENT_SECRET or STRAVA_CLIENT_SECRET in the environment')
+  process.exit(1)
+}
+
+if (!REFRESH_TOKEN) {
+  console.error('Missing STRAVA_DEV_REFRESH_TOKEN or STRAVA_REFRESH_TOKEN in the environment')
   process.exit(1)
 }
 
@@ -92,7 +102,7 @@ async function fetchStrava(url: string, options: RequestInit, label: string): Pr
   }
 }
 
-const targetDir = path.resolve(process.argv[2] ?? 'fixtures/strava')
+const targetDir = path.resolve(process.argv[2] ?? 'fixtures/strava-dev')
 
 async function downloadActivities(accessToken: string, outDir: string) {
   fs.mkdirSync(outDir, { recursive: true })

@@ -1,16 +1,18 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
 import mapboxgl from 'mapbox-gl'
-import type { Feature, Geometry } from 'geojson'
+import type { Feature, FeatureCollection, MultiPolygon, Polygon } from 'geojson'
 
 mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN || ''
 
 type Me = { authed: boolean; activityCount: number }
-type Activity = {
-  id: number; strava_activity_id: number; sport_type: string; start_date: string;
-  total_m: number; new_m: number; new_frac: number
-}
-
+type CellFeature = Feature<Polygon, { cell_x: number; cell_y: number }>
+type PlaceFeature = Feature<Polygon | MultiPolygon, {
+  place_type: string
+  name: string
+  country_code: string
+  admin1_code?: string | null
+}>
 export default function App() {
   return (
     <div className="topo-bg flex min-h-screen flex-col text-retro-ink">
@@ -110,19 +112,21 @@ function Footer() {
 }
 
 function Data() {
-  const [items, setItems] = useState<Activity[]>([])
-  const [selected, setSelected] = useState<Activity | null>(null)
-const [nextOffset, setNextOffset] = useState<number | null>(null)
-const [loading, setLoading] = useState(false)
-const [error, setError] = useState<string | null>(null)
-const [placeCounts, setPlaceCounts] = useState<Record<string, number>>({})
-const [placesError, setPlacesError] = useState<string | null>(null)
+  const [placeCounts, setPlaceCounts] = useState<Record<string, number>>({})
+  const [countsLoading, setCountsLoading] = useState(true)
+  const [countsError, setCountsError] = useState<string | null>(null)
+  const [cellFeatures, setCellFeatures] = useState<CellFeature[]>([])
+  const [cellsLoading, setCellsLoading] = useState(true)
+  const [cellsError, setCellsError] = useState<string | null>(null)
+  const [placeFeatures, setPlaceFeatures] = useState<PlaceFeature[]>([])
+  const [placesLoading, setPlacesLoading] = useState(true)
+  const [placesError, setPlacesError] = useState<string | null>(null)
   const [mapReady, setMapReady] = useState(false)
+  const [fitDone, setFitDone] = useState(false)
   const mapRef = useRef<mapboxgl.Map | null>(null)
   const mapEl = useRef<HTMLDivElement | null>(null)
   const mapStyle = import.meta.env.VITE_MAPBOX_STYLE_URL || '/map-style.json'
 
-  // init map
   useEffect(() => {
     if (!mapEl.current || mapRef.current) return
     const map = new mapboxgl.Map({
@@ -142,108 +146,261 @@ const [placesError, setPlacesError] = useState<string | null>(null)
     }
   }, [mapStyle])
 
-  const loadActivities = useCallback(async (offset: number, append: boolean) => {
-    try {
-      setLoading(true)
-      setError(null)
-      const params = new URLSearchParams({ limit: '50' })
-      if (offset > 0) params.set('offset', String(offset))
-      const r = await fetch(`/.netlify/functions/activities?${params.toString()}`)
-      if (!r.ok) throw new Error(`Failed to load activities (${r.status})`)
-      const data: { items?: Activity[]; nextOffset?: number | null } = await r.json()
-      const newItems: Activity[] = data.items ?? []
-      setItems((prev) => (append ? [...prev, ...newItems] : newItems))
-      setSelected((prev) => prev ?? (newItems[0] ?? null))
-      setNextOffset(data.nextOffset ?? null)
-    } catch (err: unknown) {
-      console.error('load activities error', err)
-      const message = err instanceof Error ? err.message : 'Failed to load activities'
-      setError(message)
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        setCountsLoading(true)
+        setCountsError(null)
+        const res = await fetch('/.netlify/functions/places')
+        if (!res.ok) throw new Error(`Failed to load place counts (${res.status})`)
+        const data: { counts?: Record<string, number> } = await res.json()
+        setPlaceCounts(data.counts ?? {})
+      } catch (err) {
+        console.error('load place counts error', err)
+        const message = err instanceof Error ? err.message : 'Failed to load place counts'
+        setCountsError(message)
+      } finally {
+        setCountsLoading(false)
+      }
     }
+    fetchCounts()
   }, [])
 
-  // load activities
-  useEffect(() => { loadActivities(0, false) }, [loadActivities])
+  useEffect(() => {
+    const fetchCells = async () => {
+      try {
+        setCellsLoading(true)
+        setCellsError(null)
+        const res = await fetch('/.netlify/functions/visited-cells')
+        if (!res.ok) throw new Error(`Failed to load visited cells (${res.status})`)
+        const data = await res.json() as FeatureCollection<Polygon, { cell_x: number; cell_y: number }>
+        setCellFeatures(data.features ?? [])
+        setFitDone(false)
+      } catch (err) {
+        console.error('load visited cells error', err)
+        const message = err instanceof Error ? err.message : 'Failed to load visited cells'
+        setCellsError(message)
+      } finally {
+        setCellsLoading(false)
+      }
+    }
+    fetchCells()
+  }, [])
 
   useEffect(() => {
     const fetchPlaces = async () => {
       try {
+        setPlacesLoading(true)
         setPlacesError(null)
-        const res = await fetch('/.netlify/functions/places')
-        if (!res.ok) throw new Error(`Failed to load places (${res.status})`)
-        const data: { counts?: Record<string, number> } = await res.json()
-        setPlaceCounts(data.counts ?? {})
+        const res = await fetch('/.netlify/functions/visited-places')
+        if (!res.ok) throw new Error(`Failed to load visited places (${res.status})`)
+        const data = await res.json() as FeatureCollection<Polygon | MultiPolygon, PlaceFeature['properties']>
+        setPlaceFeatures((data.features as PlaceFeature[] | undefined) ?? [])
+        setFitDone(false)
       } catch (err) {
-        console.error('load places error', err)
-        const message = err instanceof Error ? err.message : 'Failed to load places'
+        console.error('load visited places error', err)
+        const message = err instanceof Error ? err.message : 'Failed to load visited places'
         setPlacesError(message)
+      } finally {
+        setPlacesLoading(false)
       }
     }
     fetchPlaces()
   }, [])
 
-  // draw selected
   useEffect(() => {
     const map = mapRef.current
-    if (!map || !selected || !mapReady) return
-    ;(async () => {
-      const r = await fetch(`/.netlify/functions/activity-geo?id=${selected.id}`)
-      if (!r.ok) return
-      const gj = await r.json() as { full: Geometry; novel: Geometry }
+    if (!map || !mapReady) return
+    const data: FeatureCollection<Polygon, CellFeature['properties']> = {
+      type: 'FeatureCollection',
+      features: cellFeatures,
+    }
 
-      // cleanup previous
-      ;['full-src','novel-src'].forEach(id=>{
-        if (map.getLayer(id)) map.removeLayer(id)
-        if (map.getSource(id)) map.removeSource(id)
+    const existingSource = map.getSource('visited-cells') as mapboxgl.GeoJSONSource | undefined
+    if (existingSource) {
+      existingSource.setData(data)
+    } else {
+      map.addSource('visited-cells', { type: 'geojson', data })
+      map.addLayer({
+        id: 'visited-cells-fill',
+        type: 'fill',
+        source: 'visited-cells',
+        paint: {
+          'fill-color': '#63FFC1',
+          'fill-opacity': 0.55,
+        },
       })
+      map.addLayer({
+        id: 'visited-cells-outline',
+        type: 'line',
+        source: 'visited-cells',
+        paint: {
+          'line-color': '#0F3323',
+          'line-width': 0.6,
+          'line-opacity': 0.6,
+        },
+      })
+    }
 
-      const fullFeature: Feature = { type: 'Feature', geometry: gj.full, properties: {} }
-      const novelFeature: Feature = { type: 'Feature', geometry: gj.novel, properties: {} }
-
-      map.addSource('full-src',{ type:'geojson', data: fullFeature })
-      map.addSource('novel-src',{ type:'geojson', data: novelFeature })
-
-      map.addLayer({ id:'full-src', type:'line', source:'full-src',
-        paint:{ 'line-width':5, 'line-opacity':0.35 }, layout:{ 'line-cap':'round','line-join':'round' } })
-      map.addLayer({ id:'novel-src', type:'line', source:'novel-src',
-        paint:{ 'line-width':6, 'line-opacity':0.9 }, layout:{ 'line-cap':'round','line-join':'round' } })
-
-      const bbox = computeBbox(gj.full)
-      if (bbox) {
-        const bounds: mapboxgl.LngLatBoundsLike = [
-          [bbox[0], bbox[1]],
-          [bbox[2], bbox[3]],
-        ]
-        map.fitBounds(bounds, { padding: 40, duration: 500 })
+    if (mapReady) {
+      const placesData: FeatureCollection<Polygon | MultiPolygon, PlaceFeature['properties']> = {
+        type: 'FeatureCollection',
+        features: placeFeatures,
       }
-    })()
-  }, [selected])
+      const existingPlaces = map.getSource('visited-places') as mapboxgl.GeoJSONSource | undefined
+      if (existingPlaces) {
+        existingPlaces.setData(placesData)
+      } else {
+        map.addSource('visited-places', { type: 'geojson', data: placesData })
+        map.addLayer({
+          id: 'visited-places-fill',
+          type: 'fill',
+          source: 'visited-places',
+          paint: {
+            'fill-color': [
+              'match',
+              ['get', 'place_type'],
+              'country', '#1C3A2E',
+              'state', '#FF9CB8',
+              'county', '#63FFC1',
+              'city', '#F8E176',
+              'lake', '#5EA9FF',
+              '#63FFC1',
+            ],
+            'fill-opacity': [
+              'match',
+              ['get', 'place_type'],
+              'country', 0.12,
+              'state', 0.16,
+              'county', 0.22,
+              'city', 0.24,
+              'lake', 0.28,
+              0.2,
+            ],
+          },
+        })
+        map.addLayer({
+          id: 'visited-places-outline',
+          type: 'line',
+          source: 'visited-places',
+          paint: {
+            'line-color': '#0F2A1E',
+            'line-width': 0.5,
+            'line-opacity': 0.3,
+          },
+        })
+      }
+    }
 
-  const countryCount = placeCounts.country ?? 0
-  const stateCount = placeCounts.state ?? 0
-  const countyCount = placeCounts.county ?? 0
-const topBarMessage = placesError
-  ? placesError
-  : loading
-    ? 'Loading activities…'
-    : error
-      ? error
-      : `Tracking ${items.length} activities${nextOffset ? ' (more available)' : ''}.`
+    if (!fitDone) {
+      const bbox = computeFeatureBounds(cellFeatures.length ? cellFeatures : placeFeatures)
+      if (bbox) {
+        const map = mapRef.current
+        if (map) {
+          map.fitBounds(
+            [
+              [bbox.minLon, bbox.minLat],
+              [bbox.maxLon, bbox.maxLat],
+            ],
+            { padding: 80, maxZoom: 14, duration: 1000 }
+          )
+        }
+        setFitDone(true)
+      }
+    }
+  }, [cellFeatures, mapReady, fitDone])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReady) return
+    const placesData: FeatureCollection<Polygon | MultiPolygon, PlaceFeature['properties']> = {
+      type: 'FeatureCollection',
+      features: placeFeatures,
+    }
+    const existingPlaces = map.getSource('visited-places') as mapboxgl.GeoJSONSource | undefined
+    if (existingPlaces) {
+      existingPlaces.setData(placesData)
+    }
+  }, [placeFeatures, mapReady])
+
+  const badgeSpecs: Array<{ key: string; label: string }> = [
+    { key: 'country', label: 'Countries' },
+    { key: 'state', label: 'States/Provinces' },
+    { key: 'county', label: 'Counties' },
+    { key: 'lake', label: 'Lakes & Reservoirs' },
+  ]
+
+  const topBarMessage = countsError ?? placesError ?? cellsError ?? ((cellsLoading || placesLoading || countsLoading) ? 'Loading map…' : '')
 
   return (
     <div className="relative flex min-h-screen w-full flex-col">
-      <div className="pointer-events-none absolute left-1/2 top-4 z-20 flex -translate-x-1/2 flex-wrap items-center justify-center gap-3 px-4">
-        <Badge label="Countries" value={countryCount} />
-        <Badge label="States/Provinces" value={stateCount} />
-        <Badge label="Counties" value={countyCount} />
+      <div className="pointer-events-none absolute left-4 top-4 z-20 flex flex-col gap-3">
+        <div className="pointer-events-auto w-56 rounded-lg border-2 border-retro-sun/60 bg-retro-panel/85 px-4 py-3 text-retro-ink/90 shadow-[3px_3px_0_#10261B]">
+          <div className="text-[0.65rem] uppercase tracking-[0.18em] text-retro-ink/60">
+            Places unlocked
+          </div>
+          <ul className="mt-2 space-y-1 text-sm">
+            {badgeSpecs.map(({ key, label }) => (
+              <li key={key} className="flex items-baseline justify-between gap-2">
+                <span>{label}</span>
+                <span className="font-semibold text-retro-ink">
+                  {(placeCounts[key] ?? 0).toLocaleString()}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        {topBarMessage ? (
+          <span className="pointer-events-auto w-56 rounded-lg border-2 border-retro-sun/50 bg-retro-panel/80 px-3 py-1 text-[0.65rem] text-retro-ink/80 shadow-[3px_3px_0_#10261B]">
+            {topBarMessage}
+          </span>
+        ) : null}
       </div>
       <div className="map-frame relative flex-1">
         <div ref={mapEl} className="absolute inset-0" />
       </div>
     </div>
   )
+}
+
+type Bounds = { minLon: number; minLat: number; maxLon: number; maxLat: number }
+
+function computeFeatureBounds(features: Array<Feature<Polygon | MultiPolygon, unknown>>): Bounds | null {
+  if (!features.length) return null
+  let minLon = Infinity
+  let minLat = Infinity
+  let maxLon = -Infinity
+  let maxLat = -Infinity
+
+  features.forEach((feature) => {
+    const geom = feature.geometry
+    if (!geom) return
+    if (geom.type === 'Polygon') {
+      geom.coordinates[0]?.forEach((position) => {
+        const [lon, lat] = position
+        if (lon < minLon) minLon = lon
+        if (lat < minLat) minLat = lat
+        if (lon > maxLon) maxLon = lon
+        if (lat > maxLat) maxLat = lat
+      })
+    } else if (geom.type === 'MultiPolygon') {
+      geom.coordinates.forEach((polygon) => {
+        polygon[0]?.forEach((position) => {
+          const [lon, lat] = position
+          if (lon < minLon) minLon = lon
+          if (lat < minLat) minLat = lat
+          if (lon > maxLon) maxLon = lon
+          if (lat > maxLat) maxLat = lat
+        })
+      })
+    }
+  })
+
+  if (!Number.isFinite(minLon) || !Number.isFinite(minLat) || !Number.isFinite(maxLon) || !Number.isFinite(maxLat)) {
+    return null
+  }
+
+  return { minLon, minLat, maxLon, maxLat }
 }
 
 function Support() {
@@ -350,34 +507,12 @@ function FieldTextarea({ label, name, rows = 4, required, placeholder }: FieldTe
   )
 }
 
-function computeBbox(geom: GeoJSON.Geometry) {
-  const coords: number[][] =
-    geom.type === 'LineString'
-      ? (geom.coordinates as number[][])
-      : geom.type === 'MultiLineString'
-      ? (geom.coordinates as number[][][]).flat()
-      : []
-  if (!coords.length) return null
-  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity
-  for (const [x,y] of coords) { if (x<minX) minX=x; if (y<minY) minY=y; if (x>maxX) maxX=x; if (y>maxY) maxY=y }
-  return [minX, minY, maxX, maxY]
-}
-
 function Center({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-[50vh] place-items-center px-4">
       <div className="w-full max-w-xl space-y-6 border-4 border-black bg-retro-panel-alt/80 px-6 py-8 text-center shadow-retro-panel sm:max-w-2xl sm:px-8 sm:py-10">
         {children}
       </div>
-    </div>
-  )
-}
-
-function Badge({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="flex min-w-[90px] flex-col items-center rounded border-2 border-retro-sun bg-retro-space/60 px-2 py-1 shadow-[2px_2px_0_#10261B]">
-      <span className="font-display text-[0.6rem] uppercase tracking-[0.3em] text-retro-sun">{label}</span>
-      <span className="text-lg font-semibold text-retro-ink">{value}</span>
     </div>
   )
 }

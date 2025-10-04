@@ -16,38 +16,7 @@
       "id": "background",
       "type": "background",
       "paint": {
-        "background-color": "#173A2B"
-      }
-    },
-    {
-      "id": "landcover",
-      "type": "fill",
-      "source": "composite",
-      "source-layer": "landcover",
-      "paint": {
-        "fill-color": [
-          "match",
-          ["get", "class"],
-          ["snow", "ice"], "#1F4833",
-          "#1E4F39"
-        ],
-        "fill-opacity": 0.9
-      }
-    },
-    {
-      "id": "landuse",
-      "type": "fill",
-      "source": "composite",
-      "source-layer": "landuse",
-      "paint": {
-        "fill-color": [
-          "match",
-          ["get", "class"],
-          ["park", "wood", "grass", "scrub"], "#296848",
-          ["agriculture", "crop"], "#24593F",
-          "#1E4F39"
-        ],
-        "fill-opacity": 0.85
+        "background-color": "#132822"
       }
     },
     {
@@ -56,8 +25,8 @@
       "source": "composite",
       "source-layer": "water",
       "paint": {
-        "fill-color": "#205A61",
-        "fill-opacity": 0.92
+        "fill-color": "#1F4A5A",
+        "fill-opacity": 0.9
       }
     },
     {
@@ -66,24 +35,14 @@
       "source": "composite",
       "source-layer": "water",
       "paint": {
-        "line-color": "#133B41",
+        "line-color": "#0F2934",
         "line-width": [
           "interpolate",
           ["linear"],
           ["zoom"],
-          5, 0.2,
+          5, 0.25,
           12, 1.2
         ]
-      }
-    },
-    {
-      "id": "national-park",
-      "type": "fill",
-      "source": "composite",
-      "source-layer": "park",
-      "paint": {
-        "fill-color": "#3FD8A6",
-        "fill-opacity": 0.6
       }
     },
     {
@@ -92,13 +51,13 @@
       "source": "composite",
       "source-layer": "road",
       "paint": {
-        "line-color": "#0F3323",
+        "line-color": "#0E2C1F",
         "line-width": [
           "interpolate",
           ["linear"],
           ["zoom"],
-          5, 0.15,
-          12, 1.4
+          5, 0.18,
+          12, 1.6
         ]
       }
     },
@@ -113,9 +72,84 @@
           "interpolate",
           ["linear"],
           ["zoom"],
-          5, 0.05,
-          12, 1.0
+          5, 0.06,
+          12, 1.1
         ]
+      }
+    },
+    {
+      "id": "lake-label",
+      "type": "symbol",
+      "source": "composite",
+      "source-layer": "water_label",
+      "minzoom": 3,
+      "filter": ["in", "class", "lake", "reservoir", "bay", "harbor"],
+      "layout": {
+        "text-field": ["coalesce", ["get", "name_en"], ["get", "name"]],
+        "text-font": ["DIN Offc Pro Italic", "Arial Unicode MS Regular"],
+        "text-size": ["interpolate", ["linear"], ["zoom"], 3, 7.5, 6, 10.5, 12, 16],
+        "text-letter-spacing": 0.25,
+        "text-max-width": 9,
+        "text-padding": 2,
+        "text-variable-anchor": ["center", "top", "bottom", "left", "right", "top-left", "top-right", "bottom-left", "bottom-right"],
+        "text-justify": "auto",
+        "text-radial-offset": 0.25,
+        "text-allow-overlap": false,
+        "symbol-sort-key": ["-", ["coalesce", ["get", "symbolrank"], 10]]
+      },
+      "paint": {
+        "text-color": "#72FFE0",
+        "text-halo-color": "#0B1F1A",
+        "text-halo-width": 1.4,
+        "text-opacity": ["interpolate", ["linear"], ["zoom"], 3, 0.6, 6, 0.85, 10, 0.95]
+      }
+    },
+    {
+      "id": "river-label",
+      "type": "symbol",
+      "source": "composite",
+      "source-layer": "waterway_label",
+      "filter": ["in", "class", "river", "stream"],
+      "layout": {
+        "text-field": ["coalesce", ["get", "name_en"], ["get", "name"]],
+        "text-font": ["DIN Offc Pro Italic", "Arial Unicode MS Italic"],
+        "text-size": ["interpolate", ["linear"], ["zoom"], 5, 8, 12, 13],
+        "text-letter-spacing": 0.25,
+        "symbol-placement": "line",
+        "text-max-angle": 35,
+        "text-padding": 1,
+        "text-keep-upright": true,
+        "symbol-sort-key": ["-", ["coalesce", ["get", "symbolrank"], 10]]
+      },
+      "paint": {
+        "text-color": "#4BD4B0",
+        "text-halo-color": "#0B1F1A",
+        "text-halo-width": 1
+      }
+    },
+    {
+      "id": "outdoor-labels",
+      "type": "symbol",
+      "source": "composite",
+      "source-layer": "natural_label",
+      "minzoom": 4,
+      "filter": ["in", "type", "peak", "volcano", "mountain_range", "glacier", "forest", "park", "wetland", "grassland"],
+      "layout": {
+        "text-field": ["coalesce", ["get", "name_en"], ["get", "name"]],
+        "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Regular"],
+        "text-size": ["interpolate", ["linear"], ["zoom"], 4, 7.5, 7, 10.5, 12, 14.5],
+        "text-letter-spacing": 0.3,
+        "text-max-width": 8,
+        "text-variable-anchor": ["center", "top", "bottom", "left", "right"],
+        "text-line-height": 1.05,
+        "text-justify": "auto",
+        "symbol-sort-key": ["-", ["coalesce", ["get", "symbolrank"], 10]]
+      },
+      "paint": {
+        "text-color": "#F6DD85",
+        "text-halo-color": "#0C241B",
+        "text-halo-width": 1.2,
+        "text-opacity": ["interpolate", ["linear"], ["zoom"], 4, 0.6, 8, 0.95]
       }
     },
     {
@@ -125,14 +159,14 @@
       "source-layer": "road",
       "filter": ["==", "class", "major_rail"],
       "paint": {
-        "line-color": "#F9A6C2",
-        "line-dasharray": [3, 3],
+        "line-color": "#FF9CB8",
+        "line-dasharray": [2, 2],
         "line-width": [
           "interpolate",
           ["linear"],
           ["zoom"],
-          5, 0.1,
-          12, 0.8
+          5, 0.12,
+          12, 0.7
         ]
       }
     },
@@ -143,16 +177,16 @@
       "source-layer": "admin",
       "filter": ["==", "maritime", 0],
       "paint": {
-        "line-color": "#0F3323",
+        "line-color": "#0E261B",
         "line-width": [
           "interpolate",
           ["linear"],
           ["zoom"],
           3, 0.2,
-          10, 0.6
+          10, 0.8
         ],
         "line-dasharray": [2, 2],
-        "line-opacity": 0.4
+        "line-opacity": 0.35
       }
     },
     {
@@ -165,11 +199,11 @@
         "text-field": ["coalesce", ["get", "name_en"], ["get", "name"]],
         "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Regular"],
         "text-size": ["interpolate", ["linear"], ["zoom"], 4, 9, 10, 13],
-        "text-letter-spacing": 0.15
+        "text-letter-spacing": 0.1
       },
       "paint": {
-        "text-color": "#F6DD85",
-        "text-halo-color": "#0F2A1E",
+        "text-color": "#C7C0A8",
+        "text-halo-color": "#10261B",
         "text-halo-width": 1.2
       }
     },
@@ -182,13 +216,41 @@
       "layout": {
         "text-field": ["coalesce", ["get", "name_en"], ["get", "name"]],
         "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Regular"],
-        "text-size": ["interpolate", ["linear"], ["zoom"], 5, 7, 10, 11],
-        "text-letter-spacing": 0.2
+        "text-size": ["interpolate", ["linear"], ["zoom"], 6, 6.5, 11, 10],
+        "text-letter-spacing": 0.2,
+        "text-max-width": 6
       },
       "paint": {
-        "text-color": "#F3F2E8",
+        "text-color": "#9CA8A1",
         "text-halo-color": "#0F2A1E",
-        "text-halo-width": 1
+        "text-halo-width": 0.8,
+        "text-opacity": ["interpolate", ["linear"], ["zoom"], 4, 0.05, 6, 0.2, 9, 0.65]
+      }
+    },
+    {
+      "id": "outdoor-poi",
+      "type": "symbol",
+      "source": "composite",
+      "source-layer": "poi_label",
+      "minzoom": 5,
+      "filter": ["in", "class", "park", "national_park", "landmark", "water", "beach"],
+      "layout": {
+        "text-field": ["coalesce", ["get", "name_en"], ["get", "name"]],
+        "text-font": ["DIN Offc Pro Medium", "Arial Unicode MS Regular"],
+        "text-size": ["interpolate", ["linear"], ["zoom"], 5, 7, 12, 12.5],
+        "text-letter-spacing": 0.2,
+        "icon-image": ["match", ["get", "class"], "beach", "park-15", "park", "park-15", "national_park", "park-15", "water", "water-15", "landmark", "mountain-15", "marker-15"],
+        "icon-size": 0.8,
+        "icon-optional": true,
+        "text-offset": [0, 0.65],
+        "text-variable-anchor": ["top", "bottom", "left", "right", "center"],
+        "symbol-sort-key": ["-", ["coalesce", ["get", "symbolrank"], 10]]
+      },
+      "paint": {
+        "text-color": "#F8E176",
+        "text-halo-color": "#0E291F",
+        "text-halo-width": 1.1,
+        "text-opacity": ["interpolate", ["linear"], ["zoom"], 5, 0.4, 9, 0.95]
       }
     }
   ]

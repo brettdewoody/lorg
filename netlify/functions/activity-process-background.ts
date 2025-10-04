@@ -266,7 +266,9 @@ export const handler: Handler = async (event) => {
       ? process.env.URL || process.env.DEPLOY_URL || `${scheme}://${host}`
       : null
     const isFixtureMode = Boolean(fixturesRoot())
-    const shouldAnnotate = !isFixtureMode && parsedBody.source === 'webhook'
+    const source = typeof parsedBody.source === 'string' ? parsedBody.source : ''
+    const shouldQueueAnnotation = !isFixtureMode && source === 'webhook'
+    const shouldAnnotate = source === 'webhook' || source === 'fixture'
 
     const simplifyM = Number(process.env.SIMPLIFY_M || 4)
     const simplifyDeg = metersToDegrees(simplifyM)
@@ -699,7 +701,7 @@ export const handler: Handler = async (event) => {
       }
     })
 
-    if (shouldAnnotate && annotationText && baseUrl && activityRowId) {
+    if (shouldQueueAnnotation && annotationText && baseUrl && activityRowId) {
       await triggerAnnotation(baseUrl, activityRowId)
     }
 

@@ -19,3 +19,8 @@
   from = "/auth/strava/callback"
   to = "/.netlify/functions/auth-strava-callback"
   status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

@@ -66,17 +66,21 @@ See `docs/SCRIPTS.md` for a full script reference and the environment variables 
 
 ## Downloading personal Strava data (for local testing)
 1. Enable read + activity scopes for your Strava app and grab a long-lived refresh token (you can reuse the one stored in `strava_token.refresh_token`).
-2. Add the following to `.env` (values never checked into git):
-   ```
-   STRAVA_CLIENT_ID=...
-   STRAVA_CLIENT_SECRET=...
-   STRAVA_REFRESH_TOKEN=...
-   ```
+2. Add the following to `.env` (values never checked into git). The downloader reads `STRAVA_CLIENT_ID/SECRET/REFRESH_TOKEN` first and only falls back to the `STRAVA_DEV_*` variants if those are missing. All three values (ID, secret, refresh token) must be present or the script will exit with a helpful error. Make sure the values belong to the same Strava application and that the refresh token was issued for that client (generate a new one via Strava’s OAuth flow if needed):
+  ```
+  STRAVA_CLIENT_ID=...
+  STRAVA_CLIENT_SECRET=...
+  STRAVA_REFRESH_TOKEN=...
+  # Optional dev-specific values used only if the primary vars are unset
+  STRAVA_DEV_CLIENT_ID=...
+  STRAVA_DEV_CLIENT_SECRET=...
+  STRAVA_DEV_REFRESH_TOKEN=...
+  ```
 3. Install local dev deps if you haven’t yet:
    ```bash
    npm install ts-node dotenv @types/node --save-dev
    ```
-4. Run the downloader; it automatically throttles on rate limits and stores JSON fixtures under `fixtures/strava/` (ignored by git):
+4. Run the downloader; it automatically throttles on rate limits and stores JSON fixtures under `fixtures/strava-dev/` by default (ignored by git):
    ```bash
    node --loader ts-node/esm scripts/download-strava.ts
    ```
@@ -105,6 +109,7 @@ See `docs/SCRIPTS.md` for a full script reference and the environment variables 
 - Shared utilities for DB + Strava client
 - PostGIS schema
 - Support page (`/support`) with a Netlify form for user contact
+- Visited-cell overlay and place counts on the data view
 
 ## Next steps
 - Implement Mapbox Map Matching (or Valhalla) inside `activity-process-background.ts`

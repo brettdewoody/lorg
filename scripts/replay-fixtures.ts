@@ -30,7 +30,20 @@ function parseArgs() {
 }
 
 async function getOrCreateUser(userIdArg: string) {
-  if (UUID_REGEX.test(userIdArg)) return { userId: userIdArg, stravaAthleteId: null }
+  if (UUID_REGEX.test(userIdArg)) {
+    const match = await withPg((c) =>
+      c.query<{ strava_athlete_id: number }>('SELECT strava_athlete_id FROM app_user WHERE id = $1 LIMIT 1', [userIdArg])
+    )
+
+    if (match.rowCount === 0) {
+      console.error(
+        `No app_user found for id ${userIdArg}. Pass a Strava athlete id instead or create the user before running the replay.`
+      )
+      process.exit(1)
+    }
+
+    return { userId: userIdArg, stravaAthleteId: match.rows[0].strava_athlete_id }
+  }
 
   const athleteNumeric = Number(userIdArg)
   if (!Number.isFinite(athleteNumeric)) {
@@ -115,6 +128,19 @@ async function fetchActivityReport(activityId: number) {
 async function main() {
   const { userIdArg, fixturesArg, shouldReport } = parseArgs()
   const { userId, stravaAthleteId } = await getOrCreateUser(userIdArg)
+
+  await withPg(async (c) => {
+    await c.query('BEGIN')
+    try {
+      await c.query('DELETE FROM visited_place WHERE user_id = $1', [userId])
+      await c.query('DELETE FROM visited_cell WHERE user_id = $1', [userId])
+      await c.query('DELETE FROM activity WHERE user_id = $1', [userId])
+      await c.query('COMMIT')
+    } catch (err) {
+      await c.query('ROLLBACK')
+      throw err
+    }
+  })
 
   const fixturesDir = path.resolve(fixturesArg ?? 'fixtures/strava')
   if (!fs.existsSync(fixturesDir)) {
