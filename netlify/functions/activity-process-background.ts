@@ -644,15 +644,15 @@ export const handler: Handler = async (event) => {
           const distanceText = measurementPref === 'meters'
             ? `${(novelMeters / 1000).toFixed(1)} new kilometers`
             : `${(novelMeters / 1609.34).toFixed(1)} new miles`
-          let message = `Unlocked ${distanceText} in Lorg`
+          let message = `🗺️ Unlocked ${distanceText} in Lorg`
           if (newVisitedPlaces.length) {
             const maxNames = 3
             const names = newVisitedPlaces.map((place) => place.name)
             const headline = names.slice(0, maxNames).join(', ')
             const extras = names.length > maxNames ? `, +${names.length - maxNames} more` : ''
-            message += `. New places: ${headline}${extras}`
+            message += `. 📍 New places: ${headline}${extras}`
           }
-          annotationText = `🧭 ${message}`
+          annotationText = message
         } else {
           annotationText = null
         }

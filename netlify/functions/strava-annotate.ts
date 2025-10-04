@@ -248,6 +248,13 @@ export const handler: Handler = async (event) => {
     for (const row of pending) {
       const result = await processAnnotation(row)
       results.push(result)
+      console.info('[strava-annotate]', JSON.stringify({
+        activityId: result.activityId,
+        stravaActivityId: result.stravaActivityId,
+        status: result.status,
+        message: result.message ?? null,
+        retryAt: result.retryAt ?? null,
+      }))
       if (result.status === 'rate_limited') {
         break
       }
