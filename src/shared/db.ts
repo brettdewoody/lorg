@@ -10,9 +10,9 @@ function makePool(): Pool {
 
   const poolConfig: PoolConfig & { maxUses?: number } = {
     connectionString,
-    max: 2,                       // super small under Netlify dev
-    maxUses: 100,                 // recycle sockets periodically
-    idleTimeoutMillis: 10_000,    // trim idles quickly
+    max: 2, // super small under Netlify dev
+    maxUses: 100, // recycle sockets periodically
+    idleTimeoutMillis: 10_000, // trim idles quickly
     connectionTimeoutMillis: 15_000, // tolerate brief PgBouncer pauses
     keepAlive: true,
     ssl: { rejectUnauthorized: false } as PoolConfig['ssl'],
@@ -42,7 +42,7 @@ export function getPool(): Pool {
 
 type PgErrorLike = { message?: unknown; code?: unknown }
 
-function extractMessage(err: PgErrorLike | unknown): string {
+function extractMessage(err: unknown): string {
   if (typeof err === 'string') return err
   if (err && typeof err === 'object' && 'message' in err) {
     const value = (err as PgErrorLike).message
@@ -51,7 +51,7 @@ function extractMessage(err: PgErrorLike | unknown): string {
   return ''
 }
 
-function extractCode(err: PgErrorLike | unknown): unknown {
+function extractCode(err: unknown): unknown {
   if (err && typeof err === 'object' && 'code' in err) {
     return (err as PgErrorLike).code
   }
@@ -62,7 +62,7 @@ function isTransient(err: unknown): boolean {
   const msg = extractMessage(err)
   const code = extractCode(err)
   return (
-    msg.includes('Unable to check out process') ||      // PgBouncer checkout timeout
+    msg.includes('Unable to check out process') || // PgBouncer checkout timeout
     msg.includes('Connection terminated unexpectedly') ||
     msg.includes('Client has encountered a connection error') ||
     msg.includes('socket hang up') ||
@@ -83,7 +83,11 @@ export async function withPg<T>(fn: (c: PoolClient) => Promise<T>): Promise<T> {
       await c.query(`SET statement_timeout='8s'; SET idle_in_transaction_session_timeout='8s';`)
       return await fn(c)
     } finally {
-      try { c.release() } catch { /* ignore release error */ }
+      try {
+        c.release()
+      } catch {
+        /* ignore release error */
+      }
     }
   }
 
@@ -99,8 +103,10 @@ export async function withPg<T>(fn: (c: PoolClient) => Promise<T>): Promise<T> {
         })
         pool = null
       }
-    } catch { /* ignore pool teardown error */ }
-    await new Promise(r => setTimeout(r, 250))
+    } catch {
+      /* ignore pool teardown error */
+    }
+    await new Promise<void>((resolve) => setTimeout(resolve, 250))
     return await runOnce()
   }
 }

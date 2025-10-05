@@ -25,7 +25,7 @@ type StravaWebhookEvent = {
 export const handler: Handler = async (event) => {
   // Verification challenge
   if (event.httpMethod === 'GET') {
-    const qp = event.queryStringParameters || {}
+    const qp = event.queryStringParameters ?? {}
     if (qp['hub.mode'] === 'subscribe' && qp['hub.challenge']) {
       return {
         statusCode: 200,
@@ -39,7 +39,8 @@ export const handler: Handler = async (event) => {
   // Receive events
   if (event.httpMethod === 'POST') {
     try {
-      const msg = JSON.parse(event.body || '{}') as StravaWebhookEvent
+      const rawBody = event.body ?? '{}'
+      const msg = JSON.parse(rawBody) as StravaWebhookEvent
 
       // We only care about new activities being created
       if (msg.object_type === 'activity' && msg.aspect_type === 'create') {
@@ -53,17 +54,17 @@ export const handler: Handler = async (event) => {
             // Map Strava athlete -> our internal user_id
             const user = await client.query<{ id: string }>(
               `SELECT id FROM app_user WHERE strava_athlete_id=$1`,
-              [stravaAthleteId]
+              [stravaAthleteId],
             )
 
             if (user.rowCount) {
               const userId = user.rows[0].id
 
               // Absolute function URL that works in live/prod/local
-              const host = event.headers?.host || ''
+              const host = event.headers?.host ?? ''
               const isLocal = host.startsWith('localhost') || host.startsWith('127.0.0.1')
               const scheme = isLocal ? 'http' : 'https'
-              const baseUrl = process.env.URL || process.env.DEPLOY_URL || `${scheme}://${host}`
+              const baseUrl = process.env.URL ?? process.env.DEPLOY_URL ?? `${scheme}://${host}`
 
               // Fire background processor
               await fetch(`${baseUrl}/.netlify/functions/activity-process-background`, {

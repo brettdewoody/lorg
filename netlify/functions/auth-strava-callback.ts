@@ -19,7 +19,7 @@ export const handler: Handler = async (event) => {
          VALUES ($1,$2)
          ON CONFLICT (strava_athlete_id) DO UPDATE SET email=EXCLUDED.email
          RETURNING id`,
-        [athleteId, email]
+        [athleteId, email],
       )
       const createdUserId: string = user.rows[0].id
 
@@ -30,7 +30,7 @@ export const handler: Handler = async (event) => {
            SET access_token=EXCLUDED.access_token,
                refresh_token=EXCLUDED.refresh_token,
                expires_at=EXCLUDED.expires_at`,
-        [createdUserId, tok.access_token, tok.refresh_token, tok.expires_at]
+        [createdUserId, tok.access_token, tok.refresh_token, tok.expires_at],
       )
 
       return { userId: createdUserId, athleteId }
@@ -39,12 +39,14 @@ export const handler: Handler = async (event) => {
     const cookie = await createSessionCookie({ userId, athleteId })
     return { statusCode: 302, headers: { 'Set-Cookie': cookie, Location: '/' } }
   } catch (err: unknown) {
-    const statusCode = typeof err === 'object' && err && 'statusCode' in err
-      ? Number((err as { statusCode?: number }).statusCode) || 500
-      : 500
-    const message = typeof err === 'object' && err && 'message' in err
-      ? String((err as { message?: unknown }).message ?? 'Auth error')
-      : 'Auth error'
+    const statusCode =
+      typeof err === 'object' && err && 'statusCode' in err
+        ? Number((err as { statusCode?: number }).statusCode) || 500
+        : 500
+    const message =
+      typeof err === 'object' && err && 'message' in err
+        ? String((err as { message?: unknown }).message ?? 'Auth error')
+        : 'Auth error'
     console.error('OAuth error', err)
     return { statusCode, body: message }
   }

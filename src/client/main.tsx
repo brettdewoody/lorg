@@ -8,5 +8,5 @@ const el = document.getElementById('root')!
 createRoot(el).render(
   <BrowserRouter>
     <App />
-  </BrowserRouter>
+  </BrowserRouter>,
 )

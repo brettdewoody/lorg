@@ -12,7 +12,7 @@ function getKey() {
 
 const isLocalDev = process.env.NETLIFY_DEV === 'true' || process.env.NODE_ENV !== 'production'
 
-export type SessionPayload = {
+type SessionPayload = {
   userId: string
   athleteId: number
   exp?: number
@@ -26,11 +26,24 @@ export async function createSessionCookie(payload: SessionPayload, maxAgeSec = 6
     .setExpirationTime(Math.floor(Date.now() / 1000) + maxAgeSec)
     .sign(key)
 
+  const parts = [`${COOKIE_NAME}=${jwt}`, 'Path=/', 'HttpOnly', `Max-Age=${maxAgeSec}`]
+
+  if (isLocalDev) {
+    parts.push('SameSite=Lax')
+  } else {
+    parts.push('Secure', 'SameSite=None')
+  }
+
+  return parts.join('; ')
+}
+
+export function destroySessionCookie(): string {
   const parts = [
-    `${COOKIE_NAME}=${jwt}`,
+    `${COOKIE_NAME}=`,
     'Path=/',
     'HttpOnly',
-    `Max-Age=${maxAgeSec}`,
+    'Max-Age=0',
+    `Expires=${new Date(0).toUTCString()}`,
   ]
 
   if (isLocalDev) {
@@ -44,7 +57,7 @@ export async function createSessionCookie(payload: SessionPayload, maxAgeSec = 6
 
 export async function readSession(event: HandlerEvent): Promise<SessionPayload | null> {
   try {
-    const cookie = event.headers.cookie || event.headers.Cookie
+    const cookie = event.headers.cookie ?? event.headers.Cookie
     if (!cookie) return null
     const m = cookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`))
     if (!m) return null

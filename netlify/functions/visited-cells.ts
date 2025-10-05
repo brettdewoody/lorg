@@ -25,8 +25,8 @@ export const handler: Handler = async (event) => {
          WHERE user_id = $1
          ORDER BY cell_y, cell_x
          LIMIT $2`,
-        [userId, limit]
-      )
+        [userId, limit],
+      ),
     )
 
     const features = rows.map(({ cell_x: x, cell_y: y }) => {

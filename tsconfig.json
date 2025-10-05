@@ -9,23 +9,11 @@
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@shared/*": [
-        "src/shared/*"
-      ],
-      "@functions/*": [
-        "netlify/functions/*"
-      ]
+      "@shared/*": ["src/shared/*"],
+      "@functions/*": ["netlify/functions/*"]
     },
-    "types": [
-      "node",
-      "vite/client"
-    ],
+    "types": ["node", "vite/client"],
     "allowImportingTsExtensions": true
   },
-  "include": [
-    "src",
-    "netlify/functions",
-    "scripts",
-    "types"
-  ]
+  "include": ["src", "netlify/functions", "scripts", "types"]
 }

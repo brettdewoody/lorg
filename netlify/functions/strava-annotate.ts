@@ -2,11 +2,11 @@ import type { Handler } from '@netlify/functions'
 import { withPg } from '@shared/db'
 import { refreshToken as refreshStravaToken } from '@shared/strava'
 
-const STRAVA_API_BASE = process.env.STRAVA_API_BASE || 'https://www.strava.com/api/v3'
+const STRAVA_API_BASE = process.env.STRAVA_API_BASE ?? 'https://www.strava.com/api/v3'
 const DRY_RUN = process.env.STRAVA_ANNOTATE_DRYRUN === '1' || !!process.env.STRAVA_FIXTURES
 const TOKEN_REFRESH_BUFFER_MS = 60 * 1000
 
-interface PendingAnnotation {
+type PendingAnnotation = {
   activity_id: number
   strava_activity_id: number
   annotation_text: string
@@ -17,7 +17,7 @@ interface PendingAnnotation {
   token_exp: number | null
 }
 
-interface AnnotationResult {
+type AnnotationResult = {
   activityId: number
   stravaActivityId: number
   status: 'applied' | 'skipped' | 'rate_limited' | 'error' | 'dry_run'
@@ -25,7 +25,12 @@ interface AnnotationResult {
   retryAt?: number | null
 }
 
-async function ensureAccessToken(row: PendingAnnotation) {
+type TokenResult = {
+  accessToken: string
+  refreshToken: string
+}
+
+async function ensureAccessToken(row: PendingAnnotation): Promise<TokenResult> {
   const expMs = row.token_exp ? Number(row.token_exp) * 1000 : null
   if (expMs && expMs > Date.now() + TOKEN_REFRESH_BUFFER_MS) {
     return { accessToken: row.access_token, refreshToken: row.refresh_token }
@@ -39,7 +44,7 @@ async function ensureAccessToken(row: PendingAnnotation) {
              refresh_token = $2,
              expires_at = to_timestamp($3)
        WHERE user_id = $4`,
-      [refreshed.access_token, refreshed.refresh_token, refreshed.expires_at, row.user_id]
+      [refreshed.access_token, refreshed.refresh_token, refreshed.expires_at, row.user_id],
     )
   })
 
@@ -53,7 +58,7 @@ async function markApplied(activityId: number) {
          SET annotation_applied_at = now(),
              annotation_attempts = 0
        WHERE id = $1`,
-      [activityId]
+      [activityId],
     )
   })
 }
@@ -65,14 +70,14 @@ async function recordFailure(activityId: number, attempts: number | null = null)
         `UPDATE activity
            SET annotation_attempts = annotation_attempts + 1
          WHERE id = $1`,
-        [activityId]
+        [activityId],
       )
     } else {
       await c.query(
         `UPDATE activity
            SET annotation_attempts = $2
          WHERE id = $1`,
-        [activityId, attempts]
+        [activityId, attempts],
       )
     }
   })
@@ -111,7 +116,7 @@ async function processAnnotation(row: PendingAnnotation): Promise<AnnotationResu
 
   const detailRes = await fetch(
     `${STRAVA_API_BASE}/activities/${row.strava_activity_id}?include_all_efforts=false`,
-    { headers: { Authorization: `Bearer ${accessToken}` } }
+    { headers: { Authorization: `Bearer ${accessToken}` } },
   )
 
   if (detailRes.status === 429) {
@@ -135,7 +140,7 @@ async function processAnnotation(row: PendingAnnotation): Promise<AnnotationResu
     }
   }
 
-  const detail = await detailRes.json() as { description?: string }
+  const detail = (await detailRes.json()) as { description?: string }
   const annotation = row.annotation_text.trim()
   const existing = detail.description?.trim() ?? ''
 
@@ -191,15 +196,18 @@ async function processAnnotation(row: PendingAnnotation): Promise<AnnotationResu
 
 export const handler: Handler = async (event) => {
   try {
-    const limitParam = Number(event.queryStringParameters?.limit || 5)
+    const limitParam = Number(event.queryStringParameters?.limit ?? 5)
     const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 50) : 5
 
     let specificActivityId: number | null = null
     if (event.body) {
       try {
-        const body = JSON.parse(event.body)
-        if (body?.activityId) {
-          specificActivityId = Number(body.activityId)
+        const parsed = JSON.parse(event.body) as unknown
+        if (parsed && typeof parsed === 'object') {
+          const maybeActivityId = (parsed as { activityId?: unknown }).activityId
+          if (maybeActivityId !== undefined && maybeActivityId !== null) {
+            specificActivityId = Number(maybeActivityId)
+          }
         }
       } catch {
         // ignore body parse errors
@@ -207,7 +215,7 @@ export const handler: Handler = async (event) => {
     }
 
     const pending = await withPg(async (c) => {
-      const params: Array<number> = []
+      const params: number[] = []
       let query = `
         SELECT a.id AS activity_id,
                a.strava_activity_id,
@@ -248,13 +256,16 @@ export const handler: Handler = async (event) => {
     for (const row of pending) {
       const result = await processAnnotation(row)
       results.push(result)
-      console.info('[strava-annotate]', JSON.stringify({
-        activityId: result.activityId,
-        stravaActivityId: result.stravaActivityId,
-        status: result.status,
-        message: result.message ?? null,
-        retryAt: result.retryAt ?? null,
-      }))
+      console.info(
+        '[strava-annotate]',
+        JSON.stringify({
+          activityId: result.activityId,
+          stravaActivityId: result.stravaActivityId,
+          status: result.status,
+          message: result.message ?? null,
+          retryAt: result.retryAt ?? null,
+        }),
+      )
       if (result.status === 'rate_limited') {
         break
       }
@@ -267,6 +278,10 @@ export const handler: Handler = async (event) => {
     }
   } catch (err: unknown) {
     console.error('strava-annotate error', err)
-    return { statusCode: 500, body: (err as Error)?.message || 'Annotation error' }
+    const message = (err as { message?: unknown })?.message
+    return {
+      statusCode: 500,
+      body: typeof message === 'string' && message.length > 0 ? message : 'Annotation error',
+    }
   }
 }

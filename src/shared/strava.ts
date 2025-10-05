@@ -5,7 +5,17 @@ type TokenResponse = {
   athlete?: { id: number; email?: string }
 }
 
-export async function exchangeCode(code: string) {
+const isTokenResponse = (value: unknown): value is TokenResponse => {
+  if (!value || typeof value !== 'object') return false
+  const obj = value as Record<string, unknown>
+  return (
+    typeof obj.access_token === 'string' &&
+    typeof obj.refresh_token === 'string' &&
+    typeof obj.expires_at === 'number'
+  )
+}
+
+export async function exchangeCode(code: string): Promise<TokenResponse> {
   const cid = process.env.STRAVA_CLIENT_ID
   const secret = process.env.STRAVA_CLIENT_SECRET
   if (!cid || !secret) throw new Error('Missing Strava creds')
@@ -21,11 +31,12 @@ export async function exchangeCode(code: string) {
     }),
   })
   if (!res.ok) throw new Error('Strava token exchange failed')
-  const data = (await res.json()) as TokenResponse
-  return data
+  const raw: unknown = await res.json()
+  if (!isTokenResponse(raw)) throw new Error('Unexpected Strava token response')
+  return raw
 }
 
-export async function refreshToken(refresh_token: string) {
+export async function refreshToken(refresh_token: string): Promise<TokenResponse> {
   const cid = process.env.STRAVA_CLIENT_ID
   const secret = process.env.STRAVA_CLIENT_SECRET
 
@@ -40,14 +51,7 @@ export async function refreshToken(refresh_token: string) {
     }),
   })
   if (!res.ok) throw new Error('Strava refresh failed')
-  return (await res.json()) as TokenResponse
-}
-
-export async function getActivity(access_token: string, id: number) {
-  const res = await fetch(
-    `https://www.strava.com/api/v3/activities/${id}?include_all_efforts=false`,
-    { headers: { Authorization: `Bearer ${access_token}` } }
-  )
-  if (!res.ok) throw new Error('Failed to fetch activity detail')
-  return await res.json()
+  const raw: unknown = await res.json()
+  if (!isTokenResponse(raw)) throw new Error('Unexpected Strava token response')
+  return raw
 }

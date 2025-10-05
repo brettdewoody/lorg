@@ -1,0 +1,7 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "entry": ["src/client/main.tsx", "netlify/functions/**/*.ts", "scripts/**/*.ts", "package.json"],
+  "project": ["src/**/*.ts", "src/**/*.tsx", "netlify/functions/**/*.ts", "scripts/**/*.ts"],
+  "ignore": ["src/client/index.html"],
+  "ignoreDependencies": ["git-secrets", "postcss-load-config", "ts-node", "typescript-eslint"]
+}

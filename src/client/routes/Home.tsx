@@ -3,19 +3,45 @@ import { Link } from 'react-router-dom'
 
 type Me = { authed: boolean; activityCount: number }
 
+const toEnvString = (value: unknown, fallback = ''): string =>
+  typeof value === 'string' ? value : fallback
+
+const readJson = (res: Response): Promise<unknown> => res.json() as Promise<unknown>
+
 export default function Home() {
   const [me, setMe] = useState<Me | null>(null)
 
   useEffect(() => {
-    fetch('/.netlify/functions/me')
-      .then((res) => res.json())
-      .then(setMe)
-      .catch(() => setMe({ authed: false, activityCount: 0 }))
+    const parseMe = (value: unknown): Me | null => {
+      if (!value || typeof value !== 'object') return null
+      const candidate = value as Partial<Me>
+      if (typeof candidate.authed !== 'boolean') return null
+      if (typeof candidate.activityCount !== 'number') return null
+      return { authed: candidate.authed, activityCount: candidate.activityCount }
+    }
+
+    const loadMe = async () => {
+      try {
+        const res = await fetch('/.netlify/functions/me')
+        if (!res.ok) throw new Error(`Failed to load session (${res.status})`)
+        const raw = await readJson(res)
+        const data = parseMe(raw)
+        setMe(data ?? { authed: false, activityCount: 0 })
+      } catch {
+        setMe({ authed: false, activityCount: 0 })
+      }
+    }
+
+    void loadMe()
   }, [])
 
-  const clientId = import.meta.env.VITE_STRAVA_CLIENT_ID || ''
+  const clientId = toEnvString(import.meta.env.VITE_STRAVA_CLIENT_ID)
   const redirect = `${window.location.origin}/.netlify/functions/auth-strava-callback`
-  const authUrl = `https://www.strava.com/oauth/authorize?client_id=${encodeURIComponent(clientId)}&response_type=code&redirect_uri=${encodeURIComponent(redirect)}&approval_prompt=auto&scope=read,activity:read_all`
+  const authUrl = `https://www.strava.com/oauth/authorize?client_id=${encodeURIComponent(
+    clientId,
+  )}&response_type=code&redirect_uri=${encodeURIComponent(
+    redirect,
+  )}&approval_prompt=auto&scope=read,activity:read_all,activity:write`
 
   if (!me) return <Center>Loading…</Center>
 
@@ -23,7 +49,9 @@ export default function Home() {
     return (
       <Center>
         <div className="space-y-4">
-          <h2 className="font-display text-2xl uppercase tracking-[0.35em] text-retro-sun">Explore your world one activity at a time</h2>
+          <h2 className="font-display text-2xl uppercase tracking-[0.35em] text-retro-sun">
+            Explore your world one activity at a time
+          </h2>
           <p className="text-sm text-retro-ink/75 sm:text-base">
             Start your adventure now—connect with Strava to begin.
           </p>
@@ -42,9 +70,16 @@ export default function Home() {
   if (me.activityCount === 0) {
     return (
       <Center>
-        <h2 className="font-display text-xl uppercase tracking-[0.3em] text-retro-pixel">Connected ✅</h2>
-        <p className="text-base text-retro-ink/80">From now on every outdoor activity you record builds your world map. Lace up and earn fresh pixels.</p>
-        <Link className="btn" to="/data">View Progress</Link>
+        <h2 className="font-display text-xl uppercase tracking-[0.3em] text-retro-pixel">
+          Connected ✅
+        </h2>
+        <p className="text-base text-retro-ink/80">
+          From now on every outdoor activity you record builds your world map. Lace up and earn
+          fresh pixels.
+        </p>
+        <Link className="btn" to="/data">
+          View Progress
+        </Link>
       </Center>
     )
   }
@@ -52,8 +87,13 @@ export default function Home() {
   return (
     <Center>
       <h2 className="font-display text-xl uppercase tracking-[0.3em] text-retro-sun">All set!</h2>
-      <p className="text-base text-retro-ink/80">You’ve mapped <strong>{me.activityCount}</strong> activities since joining. Keep exploring to unlock new segments.</p>
-      <Link className="btn" to="/data">View Progress</Link>
+      <p className="text-base text-retro-ink/80">
+        You’ve mapped <strong>{me.activityCount}</strong> activities since joining. Keep exploring
+        to unlock new segments.
+      </p>
+      <Link className="btn" to="/data">
+        View Progress
+      </Link>
     </Center>
   )
 }

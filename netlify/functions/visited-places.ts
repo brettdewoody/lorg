@@ -1,4 +1,5 @@
 import type { Handler } from '@netlify/functions'
+import type { Geometry } from 'geojson'
 import { requireSession } from '@shared/auth'
 import { withPg } from '@shared/db'
 
@@ -18,8 +19,11 @@ export const handler: Handler = async (event) => {
     const { userId } = await requireSession(event)
 
     const typesParam = event.queryStringParameters?.types
-    const requestedTypes = typesParam?.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean)
-    const types = (requestedTypes && requestedTypes.length) ? requestedTypes : DEFAULT_TYPES
+    const requestedTypes = typesParam
+      ?.split(',')
+      .map((t) => t.trim().toLowerCase())
+      .filter(Boolean)
+    const types = requestedTypes?.length ? requestedTypes : DEFAULT_TYPES
 
     const limitParam = Number(event.queryStringParameters?.limit ?? MAX_PLACES)
     const limit = Number.isFinite(limitParam)
@@ -35,20 +39,44 @@ export const handler: Handler = async (event) => {
            AND pb.place_type = ANY($2::text[])
          ORDER BY pb.place_type, pb.name
          LIMIT $3`,
-        [userId, types, limit]
-      )
+        [userId, types, limit],
+      ),
     )
 
-    const features = rows.map((row) => ({
-      type: 'Feature',
-      properties: {
-        place_type: row.place_type,
-        name: row.name,
-        country_code: row.country_code,
-        admin1_code: row.admin1_code,
-      },
-      geometry: JSON.parse(row.geom_json),
-    }))
+    const parseGeometry = (json: string): Geometry | null => {
+      const parsed = JSON.parse(json) as unknown
+      if (!parsed || typeof parsed !== 'object') return null
+      if (!('type' in parsed) || typeof (parsed as { type?: unknown }).type !== 'string')
+        return null
+      return parsed as Geometry
+    }
+
+    const features = rows.reduce<
+      {
+        type: 'Feature'
+        properties: {
+          place_type: string
+          name: string
+          country_code: string
+          admin1_code: string | null
+        }
+        geometry: Geometry
+      }[]
+    >((acc, row) => {
+      const geometry = parseGeometry(row.geom_json)
+      if (!geometry) return acc
+      acc.push({
+        type: 'Feature',
+        properties: {
+          place_type: row.place_type,
+          name: row.name,
+          country_code: row.country_code,
+          admin1_code: row.admin1_code,
+        },
+        geometry,
+      })
+      return acc
+    }, [])
 
     return {
       statusCode: 200,

@@ -5,7 +5,7 @@ export const handler: Handler = async () => {
   try {
     const out = await withPg(async (c) => {
       const r = await c.query<{ host: string | null; port: number | null; now: string }>(
-        `SELECT inet_server_addr()::text AS host, inet_server_port() AS port, now() AS now`
+        `SELECT inet_server_addr()::text AS host, inet_server_port() AS port, now() AS now`,
       )
       return r.rows[0] ?? null
     })

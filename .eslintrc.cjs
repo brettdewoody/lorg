@@ -12,16 +12,18 @@ module.exports = {
     },
     ecmaVersion: 'latest',
     sourceType: 'module',
+    project: ['./tsconfig.json'],
+    tsconfigRootDir: __dirname,
   },
-  plugins: ['@typescript-eslint'],
+  plugins: ['@typescript-eslint', 'prettier'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
+    'plugin:@typescript-eslint/recommended-type-checked',
+    'plugin:@typescript-eslint/stylistic-type-checked',
+    'plugin:prettier/recommended',
   ],
-  ignorePatterns: [
-    'dist',
-    'node_modules',
-  ],
+  ignorePatterns: ['dist', 'node_modules'],
   overrides: [
     {
       files: ['netlify/functions/**/*'],
@@ -32,6 +34,8 @@ module.exports = {
     },
   ],
   rules: {
-    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
+    '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+    'prettier/prettier': 'error',
   },
 }

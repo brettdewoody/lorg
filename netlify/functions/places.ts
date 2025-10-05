@@ -27,7 +27,7 @@ export const handler: Handler = async (event) => {
          WHERE vp.user_id = $1
          ORDER BY vp.visited_at DESC
          LIMIT 50`,
-        [userId]
+        [userId],
       )
 
       const summaryPromise = c.query<SummaryRow>(
@@ -36,7 +36,7 @@ export const handler: Handler = async (event) => {
          JOIN place_boundary pb ON pb.id = vp.place_boundary_id
          WHERE vp.user_id = $1
          GROUP BY pb.place_type`,
-        [userId]
+        [userId],
       )
 
       const [detail, summary] = await Promise.all([detailPromise, summaryPromise])

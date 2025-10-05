@@ -8,7 +8,8 @@ export default function Support() {
             subtitle="Questions, feedback, or bug reports—let us know."
           />
           <p className="text-sm text-retro-ink/80">
-            Fill out the form and we&apos;ll get back to you as soon as possible. Include your athlete profile if it helps us investigate.
+            Fill out the form and we&apos;ll get back to you as soon as possible. Include your
+            athlete profile if it helps us investigate.
           </p>
           <form
             name="support"
@@ -25,9 +26,15 @@ export default function Support() {
             </p>
             <Field label="Name" name="name" autoComplete="name" required />
             <Field label="Email" name="email" type="email" autoComplete="email" required />
-            <Field label="Athlete profile (optional)" name="profile" placeholder="https://www.strava.com/athletes/..." />
+            <Field
+              label="Athlete profile (optional)"
+              name="profile"
+              placeholder="https://www.strava.com/athletes/..."
+            />
             <FieldTextarea label="How can we help?" name="message" rows={6} required />
-            <button type="submit" className="btn">Send message</button>
+            <button type="submit" className="btn">
+              Send message
+            </button>
           </form>
         </section>
       </div>
@@ -63,7 +70,9 @@ type FieldProps = {
 function Field({ label, name, type = 'text', autoComplete, required, placeholder }: FieldProps) {
   return (
     <label className="block text-sm text-retro-ink/80">
-      <span className="mb-2 block font-display text-xs uppercase tracking-[0.3em] text-retro-sun">{label}</span>
+      <span className="mb-2 block font-display text-xs uppercase tracking-[0.3em] text-retro-sun">
+        {label}
+      </span>
       <input
         id={name}
         name={name}
@@ -88,7 +97,9 @@ type FieldTextareaProps = {
 function FieldTextarea({ label, name, rows = 4, required, placeholder }: FieldTextareaProps) {
   return (
     <label className="block text-sm text-retro-ink/80">
-      <span className="mb-2 block font-display text-xs uppercase tracking-[0.3em] text-retro-sun">{label}</span>
+      <span className="mb-2 block font-display text-xs uppercase tracking-[0.3em] text-retro-sun">
+        {label}
+      </span>
       <textarea
         id={name}
         name={name}

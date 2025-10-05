@@ -11,55 +11,74 @@
 
 body {
   @apply min-h-screen bg-retro-space text-retro-ink antialiased font-body;
-  background-color: #173A2B;
+  background-color: #173a2b;
   letter-spacing: 0.02em;
   image-rendering: pixelated;
 }
 
 a {
-  color: #3FD8A6;
+  color: #3fd8a6;
   text-decoration: none;
 }
 
 a:hover {
-  color: #F7D774;
+  color: #f7d774;
 }
 
 .btn {
   @apply inline-flex items-center justify-center uppercase tracking-wide text-sm text-retro-space font-display;
   padding: 0.9rem 1.6rem;
-  border: 4px solid #F6DD85;
-  background-color: #3FD8A6;
-  box-shadow: 4px 4px 0 #10261B;
-  transition: transform 80ms ease, box-shadow 80ms ease;
+  border: 4px solid #f6dd85;
+  background-color: #3fd8a6;
+  box-shadow: 4px 4px 0 #10261b;
+  transition:
+    transform 80ms ease,
+    box-shadow 80ms ease;
 }
 .btn:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 #10261B;
+  box-shadow: 6px 6px 0 #10261b;
 }
 .btn:active {
   transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0 #10261B;
+  box-shadow: 2px 2px 0 #10261b;
 }
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
-  box-shadow: 4px 4px 0 #10261B;
+  box-shadow: 4px 4px 0 #10261b;
 }
 
 .topo-bg {
   position: relative;
   min-height: 100vh;
   isolation: isolate;
-  background-color: #173A2B;
+  background-color: #173a2b;
   background-image:
-    radial-gradient(circle at 20% 18%, rgba(63,216,166,0.26) 0%, transparent 60%),
-    radial-gradient(circle at 85% 22%, rgba(246,221,133,0.22) 0%, transparent 55%),
-    linear-gradient(145deg, rgba(32,74,53,0.55), transparent 60%),
-    repeating-linear-gradient(0deg, rgba(23,65,45,0.75) 0, rgba(23,65,45,0.75) 14px, rgba(16,45,31,0.85) 14px, rgba(16,45,31,0.85) 28px),
-    repeating-linear-gradient(90deg, rgba(23,65,45,0.75) 0, rgba(23,65,45,0.75) 14px, rgba(16,45,31,0.85) 14px, rgba(16,45,31,0.85) 28px);
-  background-size: cover, cover, cover, 28px 28px, 28px 28px;
+    radial-gradient(circle at 20% 18%, rgba(63, 216, 166, 0.26) 0%, transparent 60%),
+    radial-gradient(circle at 85% 22%, rgba(246, 221, 133, 0.22) 0%, transparent 55%),
+    linear-gradient(145deg, rgba(32, 74, 53, 0.55), transparent 60%),
+    repeating-linear-gradient(
+      0deg,
+      rgba(23, 65, 45, 0.75) 0,
+      rgba(23, 65, 45, 0.75) 14px,
+      rgba(16, 45, 31, 0.85) 14px,
+      rgba(16, 45, 31, 0.85) 28px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      rgba(23, 65, 45, 0.75) 0,
+      rgba(23, 65, 45, 0.75) 14px,
+      rgba(16, 45, 31, 0.85) 14px,
+      rgba(16, 45, 31, 0.85) 28px
+    );
+  background-size:
+    cover,
+    cover,
+    cover,
+    28px 28px,
+    28px 28px;
 }
 
 .topo-bg::before {
@@ -68,8 +87,8 @@ a:hover {
   inset: 0;
   z-index: -1;
   background-image:
-    linear-gradient(115deg, rgba(246,221,133,0.06) 1px, transparent 1px),
-    linear-gradient(295deg, rgba(63,216,166,0.06) 1px, transparent 1px);
+    linear-gradient(115deg, rgba(246, 221, 133, 0.06) 1px, transparent 1px),
+    linear-gradient(295deg, rgba(63, 216, 166, 0.06) 1px, transparent 1px);
   background-size: 38px 38px;
   mix-blend-mode: screen;
   opacity: 0.6;
@@ -82,8 +101,8 @@ a:hover {
   inset: 0;
   z-index: -2;
   background-image:
-    linear-gradient(180deg, rgba(18,42,32,0.85), rgba(10,26,19,0.94)),
-    linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(0,0,0,0) 65%);
+    linear-gradient(180deg, rgba(18, 42, 32, 0.85), rgba(10, 26, 19, 0.94)),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0) 65%);
   pointer-events: none;
   opacity: 1;
 }
@@ -119,8 +138,17 @@ a:hover {
   background-image:
     linear-gradient(0deg, rgba(9, 24, 18, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(9, 24, 18, 0.08) 1px, transparent 1px),
-    repeating-linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0px, rgba(0, 0, 0, 0.08) 2px, transparent 2px, transparent 6px);
-  background-size: 24px 24px, 24px 24px, 2px 4px;
+    repeating-linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.08) 0px,
+      rgba(0, 0, 0, 0.08) 2px,
+      transparent 2px,
+      transparent 6px
+    );
+  background-size:
+    24px 24px,
+    24px 24px,
+    2px 4px;
   mix-blend-mode: screen;
   opacity: 0.45;
 }
@@ -130,9 +158,10 @@ a:hover {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(circle at 30% 30%, rgba(63, 216, 166, 0.08), transparent 60%),
-              radial-gradient(circle at 70% 70%, rgba(247, 221, 133, 0.05), transparent 55%),
-              rgba(9, 24, 18, 0.35);
+  background:
+    radial-gradient(circle at 30% 30%, rgba(63, 216, 166, 0.08), transparent 60%),
+    radial-gradient(circle at 70% 70%, rgba(247, 221, 133, 0.05), transparent 55%),
+    rgba(9, 24, 18, 0.35);
   mix-blend-mode: multiply;
 }
 
