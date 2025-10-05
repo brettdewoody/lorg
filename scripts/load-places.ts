@@ -43,7 +43,7 @@ function loadFile(file: string): Feature[] {
 function validateFeature(feature: Feature, file: string, index: number) {
   const props = feature.properties || {}
   const { place_type, country_code, name } = props
-  if (!place_type || !['country', 'state', 'county', 'city', 'lake'].includes(place_type)) {
+  if (!place_type || !['country', 'state', 'county', 'city', 'lake', 'peak'].includes(place_type)) {
     throw new Error(`${file}[${index}] missing valid place_type`)
   }
   if (!country_code) {

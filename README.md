@@ -14,7 +14,7 @@ Lorg connects to Strava, maps your activities, and highlights how much new terri
 ## Quick start
 
 1. Create a Supabase project and enable PostGIS:
-   - SQL → run the migration in `db/migrations/001_init.sql`
+   - SQL → apply the migration chain in `db/migrations/` (run each file in order starting with `001_init.sql`).
 
 2. Create a Strava app:
    - Set Redirect URI to: `https://<your-site>/.netlify/functions/auth-strava-callback`
@@ -139,8 +139,8 @@ STRAVA_DEV_REFRESH_TOKEN=...
 
 ## Place boundary data
 
-- Run `db/migrations/001_init.sql` (or the full migration chain) to ensure `place_boundary`/`visited_place` exist alongside the core tables. Locally: `psql -f db/migrations/001_init.sql` after exporting your `.env`.
-- Load simplified polygons for the regions you support (e.g., UK countries, constituent nations, and counties) into `place_boundary`. Natural Earth and ONS datasets work well; keep geometries in `SRID 4326`.
+- Run the migrations in `db/migrations/` so `place_boundary`, `visited_place`, and the newer helpers (measurement preference column, `peak` type) exist. Locally: `psql -f db/migrations/001_init.sql` then apply `002_…`, `003_…`, `004_…` in sequence after exporting your `.env`.
+- Load simplified polygons for the regions you support (countries, states/provinces, counties, cities, lakes, peaks) into `place_boundary`. Natural Earth, ONS, and DoBIH datasets work well; keep geometries in `SRID 4326`.
 - After loading the GeoJSON via `npm run places:load`, new activities automatically record unlocked places—no backfill runs by default. For Supabase or other hosted Postgres instances, set `PGSSLMODE=require` (or include `?sslmode=require` on `DATABASE_URL`) so the loader uses SSL.
 
 ## What’s included

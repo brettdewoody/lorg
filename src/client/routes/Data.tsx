@@ -26,6 +26,12 @@ type Bounds = { minLon: number; minLat: number; maxLon: number; maxLat: number }
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
 
+type PlaceStreak = {
+  current: number
+  longest: number
+  lastVisitedOn: string | null
+}
+
 const parseCounts = (value: unknown): Record<string, number> => {
   if (!isObject(value)) return {}
   const countsValue = value.counts
@@ -37,6 +43,37 @@ const parseCounts = (value: unknown): Record<string, number> => {
     }
   })
   return result
+}
+
+const parsePlaceStreaks = (value: unknown): Record<string, PlaceStreak> => {
+  if (!isObject(value)) return {}
+  const streaksValue = value.streaks
+  if (!isObject(streaksValue)) return {}
+  const result: Record<string, PlaceStreak> = {}
+  Object.entries(streaksValue).forEach(([key, raw]) => {
+    if (!isObject(raw)) return
+    const current = raw.current
+    const longest = raw.longest
+    const lastVisitedOn = raw.lastVisitedOn
+    if (typeof current !== 'number' || typeof longest !== 'number') return
+    if (lastVisitedOn !== null && typeof lastVisitedOn !== 'string') return
+    result[key] = {
+      current,
+      longest,
+      lastVisitedOn: lastVisitedOn ?? null,
+    }
+  })
+  return result
+}
+
+const formatStreakDate = (value: string | null): string => {
+  if (!value) return '–'
+  const parsed = Date.parse(`${value}T00:00:00Z`)
+  if (!Number.isFinite(parsed)) return value
+  return new Date(parsed).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })
 }
 
 const isFeatureCollection = (value: unknown): value is FeatureCollection =>
@@ -113,6 +150,7 @@ const isGeoJSONSource = (source: AnySourceImpl | undefined): source is GeoJSONSo
 
 export default function Data() {
   const [placeCounts, setPlaceCounts] = useState<Record<string, number>>({})
+  const [placeStreaks, setPlaceStreaks] = useState<Record<string, PlaceStreak>>({})
   const [countsLoading, setCountsLoading] = useState(true)
   const [countsError, setCountsError] = useState<string | null>(null)
   const [cellFeatures, setCellFeatures] = useState<CellFeature[]>([])
@@ -147,7 +185,7 @@ export default function Data() {
   }, [mapStyle])
 
   useEffect(() => {
-    const fetchCounts = async () => {
+    const fetchPlaceSummary = async () => {
       try {
         setCountsLoading(true)
         setCountsError(null)
@@ -155,6 +193,7 @@ export default function Data() {
         if (!res.ok) throw new Error(`Failed to load place counts (${res.status})`)
         const raw = await readJson(res)
         setPlaceCounts(parseCounts(raw))
+        setPlaceStreaks(parsePlaceStreaks(raw))
       } catch (err) {
         console.error('load place counts error', err)
         const message = err instanceof Error ? err.message : 'Failed to load place counts'
@@ -163,7 +202,7 @@ export default function Data() {
         setCountsLoading(false)
       }
     }
-    void fetchCounts()
+    void fetchPlaceSummary()
   }, [])
 
   useEffect(() => {
@@ -271,6 +310,8 @@ export default function Data() {
               '#F8E176',
               'lake',
               '#5EA9FF',
+              'peak',
+              '#E58CFF',
               '#63FFC1',
             ],
             'fill-opacity': [
@@ -286,6 +327,8 @@ export default function Data() {
               0.24,
               'lake',
               0.28,
+              'peak',
+              0.32,
               0.2,
             ],
           },
@@ -339,6 +382,7 @@ export default function Data() {
     { key: 'state', label: 'States/Provinces' },
     { key: 'county', label: 'Counties' },
     { key: 'lake', label: 'Lakes & Reservoirs' },
+    { key: 'peak', label: 'Peaks bagged' },
   ]
 
   const topBarMessage =
@@ -365,6 +409,31 @@ export default function Data() {
             ))}
           </ul>
         </div>
+        {Object.keys(placeStreaks).length ? (
+          <div className="pointer-events-auto w-56 rounded-lg border-2 border-retro-sun/50 bg-retro-panel/85 px-4 py-3 text-retro-ink/90 shadow-[3px_3px_0_#10261B]">
+            <div className="text-[0.65rem] uppercase tracking-[0.18em] text-retro-ink/60">
+              Streaks
+            </div>
+            <ul className="mt-2 space-y-2 text-[0.7rem]">
+              {badgeSpecs.map(({ key, label }) => {
+                const streak = placeStreaks[key]
+                if (!streak) return null
+                return (
+                  <li key={key}>
+                    <div className="flex items-baseline justify-between gap-2 text-sm">
+                      <span>{label}</span>
+                      <span className="font-semibold text-retro-ink">{streak.current}d</span>
+                    </div>
+                    <div className="mt-0.5 flex items-center justify-between text-[0.65rem] text-retro-ink/70">
+                      <span>Best: {streak.longest}d</span>
+                      <span>Last: {formatStreakDate(streak.lastVisitedOn)}</span>
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        ) : null}
         {topBarMessage ? (
           <span className="pointer-events-auto w-56 rounded-lg border-2 border-retro-sun/50 bg-retro-panel/80 px-3 py-1 text-[0.65rem] text-retro-ink/80 shadow-[3px_3px_0_#10261B]">
             {topBarMessage}

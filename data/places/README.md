@@ -7,10 +7,11 @@ Copy simplified GeoJSON files into this directory before running the loader. Exp
 - `counties.geojson`
 - `cities_uk.geojson`
 - `lakes_uk.geojson`
+- `peaks.geojson`
 
 Each feature should include properties:
 
-- `place_type`: `country`, `state`, `county`, `city`, or `lake`
+- `place_type`: `country`, `state`, `county`, `city`, `lake`, or `peak`
 - `country_code`: ISO 3166-1 alpha-2 code (e.g., `US`, `CA`, `GB`)
 - `name`: human-friendly name
 - Optional `admin1_code`: useful for counties to record the parent state/province (e.g., `US-CO`)
@@ -59,3 +60,20 @@ mapshaper ne_10m_lakes.shp \
 ```
 
 Natural Earth polygons occasionally include small holes; `-clean` removes slivers before export. Feel free to tweak the simplify tolerance if the file is still heavy.
+
+### Peaks & high points
+
+Point datasets need a small buffer so GPS traces intersect reliably. Start from a curated summit export (Peakbagger, OpenStreetMap `natural=peak`, Database of British and Irish Hills) with latitude/longitude columns:
+
+```bash
+mapshaper peaks.csv \
+  -point2poly +buffer=0.003 \
+  -each "place_type='peak'; country_code=country_code ?? 'US'; admin1_code=null; metadata={source:'OSM', note:'300m buffer'}" \
+  -rename-fields name=peak_name \
+  -clean \
+  -o format=geojson data/places/peaks.geojson
+```
+
+- `buffer=0.003` ≈ 300 m at the equator; adjust for your dataset.
+- Populate `country_code` (and `admin1_code` if available) so streaks and counts stay regional.
+- Keep provenance in `metadata` (elevation, prominence, dataset year) for auditability.

@@ -312,6 +312,9 @@ export const handler: Handler = async (event) => {
 
     const accessToken = await getAccessTokenForUser(userId)
     const detail = await fetchActivityDetail(accessToken, stravaActivityId)
+    const measurementPreferenceRaw = detail?.athlete?.measurement_preference
+    const measurementPreference =
+      typeof measurementPreferenceRaw === 'string' ? measurementPreferenceRaw.toLowerCase() : null
 
     const { ok, reason } = shouldProcess(detail)
     if (!ok) {
@@ -356,6 +359,13 @@ export const handler: Handler = async (event) => {
       await c.query('BEGIN')
       try {
         const lineGeoJSON = JSON.stringify(line)
+        if (measurementPreference) {
+          await c.query(`UPDATE app_user SET measurement_preference=$1 WHERE id=$2`, [
+            measurementPreference,
+            userId,
+          ])
+        }
+
         const ins = await c.query<{ id: string; geom_geojson: string | null }>(
           `
           INSERT INTO activity (
@@ -686,7 +696,7 @@ export const handler: Handler = async (event) => {
         if (shouldAnnotate) {
           annotationText = buildAnnotationMessage({
             novelMeters,
-            measurementPref: detail?.athlete?.measurement_preference ?? null,
+            measurementPref: measurementPreference,
             places: newVisitedPlaces,
           })
         } else {

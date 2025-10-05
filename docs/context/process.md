@@ -5,6 +5,7 @@
   - Run dev server: `npm run dev` (Netlify dev for client + functions).
   - Run tests: `npm run test` (Vitest via jsdom/Testing Library).
   - Before pushing: `npm run check` (runs `format:check`, `lint`, `typecheck`, `knip`).
+  - Run `npm run hooks:install` once per clone so Lefthook keeps the local hooks in sync.
   - Optional targeted scans: `npm run knip` for unused code, `npm run format` to auto-fix style.
 
 - **Hooks & Tooling**
@@ -17,4 +18,4 @@
 
 - **Deployment**
   - Netlify auto-builds on main; ensure `npm run build` succeeds locally when touching backend.
-  - Supabase migrations live in `db/migrations/`—run manually via `psql` when needed.
+  - Supabase migrations live in `db/migrations/`—run manually via `psql` when needed (apply new files like `003_add_measurement_preference.sql` and `004_add_peak_place_type.sql` before loading peaks in any environment).

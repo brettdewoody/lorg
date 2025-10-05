@@ -53,6 +53,9 @@ export default function Header() {
           <Link className="transition hover:text-retro-sun" to="/">
             Home
           </Link>
+          <Link className="transition hover:text-retro-sun" to="/dashboard">
+            Dashboard
+          </Link>
           <Link className="transition hover:text-retro-sun" to="/data">
             Data
           </Link>
