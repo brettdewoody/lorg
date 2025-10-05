@@ -1,7 +1,7 @@
 # Lorg
 
-[![CI](https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/ci.yml)
-[![Netlify Status](https://api.netlify.com/api/v1/badges/<netlify-site-id>/deploy-status)](https://app.netlify.com/sites/<netlify-site-name>/deploys)
+[![CI](https://github.com/brettdewoody/lorg/actions/workflows/ci.yml/badge.svg)](https://github.com/brettdewoody/lorg/actions/workflows/ci.yml)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/e36c42e1-cebc-400b-907b-286ef55a4b96/deploy-status)](https://app.netlify.com/sites/lorg/deploys)
 
 Lorg connects to Strava, maps your activities, and highlights how much new territory you’ve explored versus your historical footprint using Supabase PostGIS and Netlify Functions.
 
