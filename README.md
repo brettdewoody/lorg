@@ -1,12 +1,14 @@
-# FreshTracks Starter (Netlify + Supabase + Mapbox)
+# Lorg
 
-A minimal starter for an app that connects to Strava, map-matches activities, and computes **new distance** vs your previously visited network using PostGIS.
+[![CI](https://github.com/<owner>/<repo>/actions/workflows/ci.yml/badge.svg)](https://github.com/<owner>/<repo>/actions/workflows/ci.yml)
+[![Netlify Status](https://api.netlify.com/api/v1/badges/<netlify-site-id>/deploy-status)](https://app.netlify.com/sites/<netlify-site-name>/deploys)
+
+Lorg connects to Strava, maps your activities, and highlights how much new territory you’ve explored versus your historical footprint using Supabase PostGIS and Netlify Functions.
 
 ## Stack
 
 - Netlify Functions (HTTP + Background + Scheduled)
 - Supabase Postgres with PostGIS
-  -- https://supabase.com/dashboard/project/sjmdzjgqvfmkugwerpwo/sql/5c6a3398-ad94-45ee-b8d2-8beb3b4f02e9
 - React + Vite + Mapbox GL JS
 
 ## Quick start
@@ -29,10 +31,10 @@ npm i
 5. Local dev:
 
 ```bash
-npx netlify dev
+npm run dev
 ```
 
-This runs Vite + Netlify Functions locally.
+This runs Vite and Netlify Functions via `netlify dev`. Install the Netlify CLI if you prefer to run it manually.
 
 6. Deploy:
 
@@ -52,7 +54,13 @@ This runs Vite + Netlify Functions locally.
 
 ## NPM scripts
 
-See `docs/SCRIPTS.md` for a full script reference and the environment variables required for each command.
+See `docs/SCRIPTS.md` for a full script reference and the environment variables required for each command. Common tasks:
+
+- `npm run dev` – Netlify dev server (React + functions) at http://localhost:8888.
+- `npm run build` – Production bundle + Netlify function builds.
+- `npm run test` – Vitest (jsdom + Testing Library). Add `--watch` for TDD or `npm run test:coverage` for V8 coverage.
+- `npm run check` – Runs `format:check`, `lint`, `typecheck`, and `knip` in one pass.
+- `npm run hooks:install` – Installs Lefthook’s git hooks locally.
 
 ## Development checks
 
@@ -68,7 +76,7 @@ See `docs/SCRIPTS.md` for a full script reference and the environment variables 
 
 ## Strava annotations
 
-- The background processor records a message such as `"3.1 new miles"` (or kilometers when the athlete’s measurement preference is metric).
+- The background processor records a message such as `🗺️ Explored 3.1 new miles in Lorg` (or kilometers when the athlete’s measurement preference is metric).
 - New webhook-driven activities automatically trigger the `strava-annotate` Netlify function, which appends the message to the activity description.
 - The Strava OAuth flow must request the `activity:write` scope (in addition to `read,activity:read_all`) so annotations can update activity descriptions; have connected athletes re-authorize after deploying the change.
 - You can run the function manually for pending items:
@@ -122,19 +130,21 @@ STRAVA_DEV_REFRESH_TOKEN=...
    Provide the UUID from `app_user.id`. The script sets `STRAVA_FIXTURES` so `activity-process-background` reads JSON files instead of Strava’s API.
 
 6. To inspect grid-cell novel distance against your full history offline:
+
    ```bash
    npm run fixtures:compare -- [fixturesDir]
    ```
 
-```
-This prints per-activity and aggregate totals using the same cell-based logic the backend now uses.
+   This prints per-activity and aggregate totals using the same cell-based logic the backend now uses.
 
 ## Place boundary data
+
 - Run `db/migrations/001_init.sql` (or the full migration chain) to ensure `place_boundary`/`visited_place` exist alongside the core tables. Locally: `psql -f db/migrations/001_init.sql` after exporting your `.env`.
 - Load simplified polygons for the regions you support (e.g., UK countries, constituent nations, and counties) into `place_boundary`. Natural Earth and ONS datasets work well; keep geometries in `SRID 4326`.
 - After loading the GeoJSON via `npm run places:load`, new activities automatically record unlocked places—no backfill runs by default. For Supabase or other hosted Postgres instances, set `PGSSLMODE=require` (or include `?sslmode=require` on `DATABASE_URL`) so the loader uses SSL.
 
 ## What’s included
+
 - Minimal React page with Mapbox
 - Netlify Functions stubs for OAuth, webhook handling, background processing, and place summaries
 - Shared utilities for DB + Strava client
@@ -143,7 +153,11 @@ This prints per-activity and aggregate totals using the same cell-based logic th
 - Visited-cell overlay and place counts on the data view
 
 ## Next steps
+
 - Implement Mapbox Map Matching (or Valhalla) inside `activity-process-background.ts`
 - Wire the UI to list activities and draw `novel_geom` vs `geom`
 - Add privacy zones UI and API
+
+```
+
 ```

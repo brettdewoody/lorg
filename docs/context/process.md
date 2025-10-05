@@ -3,6 +3,7 @@
 - **Local development**
   - Install deps: `npm install`.
   - Run dev server: `npm run dev` (Netlify dev for client + functions).
+  - Run tests: `npm run test` (Vitest via jsdom/Testing Library).
   - Before pushing: `npm run check` (runs `format:check`, `lint`, `typecheck`, `knip`).
   - Optional targeted scans: `npm run knip` for unused code, `npm run format` to auto-fix style.
 

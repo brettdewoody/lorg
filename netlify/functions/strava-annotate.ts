@@ -1,6 +1,7 @@
 import type { Handler } from '@netlify/functions'
 import { withPg } from '@shared/db'
 import { refreshToken as refreshStravaToken } from '@shared/strava'
+import { mergeAnnotationDescription } from './utils/annotation'
 
 const STRAVA_API_BASE = process.env.STRAVA_API_BASE ?? 'https://www.strava.com/api/v3'
 const DRY_RUN = process.env.STRAVA_ANNOTATE_DRYRUN === '1' || !!process.env.STRAVA_FIXTURES
@@ -144,19 +145,9 @@ async function processAnnotation(row: PendingAnnotation): Promise<AnnotationResu
   const annotation = row.annotation_text.trim()
   const originalDescription = detail.description ?? ''
 
-  const stripExistingAnnotation = (description: string): string => {
-    const paragraphs = description.split(/\n{2,}/).map((p) => p.trim())
-    const kept = paragraphs.filter((para) => {
-      const normalized = para.trimStart()
-      return !normalized.startsWith('🗺️ Unlocked ')
-    })
-    return kept.join('\n\n').trim()
-  }
+  const { description, unchanged } = mergeAnnotationDescription(originalDescription, annotation)
 
-  const baseDescription = stripExistingAnnotation(originalDescription).trim()
-  const description = baseDescription ? `${baseDescription}\n\n${annotation}` : annotation
-
-  if (originalDescription.trim() === description.trim()) {
+  if (unchanged) {
     await markApplied(row.activity_id)
     return {
       activityId: row.activity_id,

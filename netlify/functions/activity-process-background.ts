@@ -5,6 +5,7 @@ import { withPg } from '@shared/db'
 import { refreshToken } from '@shared/strava'
 import polyline from '@mapbox/polyline'
 import type { Geometry, LineString } from 'geojson'
+import { buildAnnotationMessage, type AnnotationPlace } from './utils/annotation'
 
 type StravaAthlete = {
   measurement_preference?: string
@@ -347,7 +348,7 @@ export const handler: Handler = async (event) => {
     }
 
     let annotationText: string | null = null
-    let newVisitedPlaces: { name: string; placeType: string }[] = []
+    let newVisitedPlaces: AnnotationPlace[] = []
     let activityRowId: string | null = null
 
     // Everything below is one transaction
@@ -683,20 +684,11 @@ export const handler: Handler = async (event) => {
         }
 
         if (shouldAnnotate) {
-          const measurementPref = detail?.athlete?.measurement_preference?.toLowerCase()
-          const distanceText =
-            measurementPref === 'meters'
-              ? `${(novelMeters / 1000).toFixed(1)} new kilometers`
-              : `${(novelMeters / 1609.34).toFixed(1)} new miles`
-          let message = `🗺️ Explored ${distanceText} in Lorg`
-          if (newVisitedPlaces.length) {
-            const maxNames = 3
-            const names = newVisitedPlaces.map((place) => place.name)
-            const headline = names.slice(0, maxNames).join(', ')
-            const extras = names.length > maxNames ? `, +${names.length - maxNames} more` : ''
-            message += `. 📍 New places: ${headline}${extras}`
-          }
-          annotationText = message
+          annotationText = buildAnnotationMessage({
+            novelMeters,
+            measurementPref: detail?.athlete?.measurement_preference ?? null,
+            places: newVisitedPlaces,
+          })
         } else {
           annotationText = null
         }

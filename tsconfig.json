@@ -12,7 +12,7 @@
       "@shared/*": ["src/shared/*"],
       "@functions/*": ["netlify/functions/*"]
     },
-    "types": ["node", "vite/client"],
+    "types": ["node", "vite/client", "vitest/globals"],
     "allowImportingTsExtensions": true
   },
   "include": ["src", "netlify/functions", "scripts", "types"]
