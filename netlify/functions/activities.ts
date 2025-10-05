@@ -18,6 +18,7 @@ export const handler: Handler = async (event) => {
                 COALESCE(new_frac,0)   AS new_frac
          FROM activity
          WHERE user_id=$1
+           AND sport_type NOT IN ('VirtualRide','VirtualRun')
          ORDER BY start_date DESC
          LIMIT $2 OFFSET $3`,
         [userId, fetchLimit, offset],

@@ -57,7 +57,10 @@ export const handler: Handler = async (event) => {
       )
 
       const activityCountRes = await client.query<{ count: number }>(
-        `SELECT COUNT(*)::int AS count FROM activity WHERE user_id = $1`,
+        `SELECT COUNT(*)::int AS count
+         FROM activity
+         WHERE user_id = $1
+           AND sport_type NOT IN ('VirtualRide','VirtualRun')`,
         [userId],
       )
 
@@ -65,7 +68,9 @@ export const handler: Handler = async (event) => {
         `
         SELECT COALESCE(SUM(new_len_m), 0) AS total
         FROM activity
-        WHERE user_id=$1 AND start_date >= now() - interval '7 days'
+        WHERE user_id=$1
+          AND sport_type NOT IN ('VirtualRide','VirtualRun')
+          AND start_date >= now() - interval '7 days'
         `,
         [userId],
       )
@@ -75,6 +80,7 @@ export const handler: Handler = async (event) => {
         SELECT COALESCE(SUM(new_len_m), 0) AS total
         FROM activity
         WHERE user_id=$1
+          AND sport_type NOT IN ('VirtualRide','VirtualRun')
         `,
         [userId],
       )
@@ -91,6 +97,7 @@ export const handler: Handler = async (event) => {
         SELECT id, strava_activity_id, sport_type, start_date, new_len_m, annotation_text
         FROM activity
         WHERE user_id=$1
+          AND sport_type NOT IN ('VirtualRide','VirtualRun')
         ORDER BY start_date DESC
         LIMIT 5
         `,

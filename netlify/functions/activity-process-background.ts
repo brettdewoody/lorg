@@ -46,6 +46,8 @@ const ALLOW_SPORTS = new Set<string>([
   'EBikeRide',
   'EMountainBikeRide',
 ])
+const isVirtualSport = (value: string | null | undefined) =>
+  typeof value === 'string' && value.toLowerCase().includes('virtual')
 const MIN_DISTANCE_LIST_M = 200
 const metersToDegrees = (m: number) => m / 111_320
 const CELL_GRID_DEG = Number(process.env.CELL_GRID_DEG ?? process.env.CELL_SIZE_DEG ?? 0.0005)
@@ -270,6 +272,8 @@ async function fetchActivityLine(accessToken: string, id: number): Promise<LineS
 
 function shouldProcess(detail: StravaActivityDetail): { ok: boolean; reason?: string } {
   const sport = detail.sport_type ?? detail.type
+  if (isVirtualSport(sport)) return { ok: false, reason: 'virtual activity' }
+  if (isVirtualSport(detail.type)) return { ok: false, reason: 'virtual activity' }
   if (!sport || !ALLOW_SPORTS.has(sport))
     return { ok: false, reason: `sport ${sport ?? 'unknown'} not allowed` }
   if (detail.trainer) return { ok: false, reason: 'trainer/indoor' }
