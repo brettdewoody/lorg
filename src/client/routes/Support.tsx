@@ -1,4 +1,42 @@
+import { useState, type FormEvent } from 'react'
+
+const encodeFormData = (form: HTMLFormElement): string => {
+  const formData = new FormData(form)
+  if (!formData.get('form-name')) formData.set('form-name', 'support')
+  const pairs: string[] = []
+  formData.forEach((value, key) => {
+    pairs.push(`${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+  })
+  return pairs.join('&')
+}
+
 export default function Support() {
+  const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle')
+
+  const submitForm = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    setStatus('submitting')
+    try {
+      const body = encodeFormData(form)
+      const res = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+      })
+      if (!res.ok) throw new Error(`Submission failed (${res.status})`)
+      form.reset()
+      setStatus('success')
+    } catch (err) {
+      console.error('Support form submission error', err)
+      setStatus('error')
+    }
+  }
+
+  const handleChange = () => {
+    if (status !== 'idle') setStatus('idle')
+  }
+
   return (
     <div className="px-3 py-6 sm:px-6 lg:px-10">
       <div className="main-shell">
@@ -17,6 +55,10 @@ export default function Support() {
             data-netlify="true"
             netlify-honeypot="bot-field"
             className="space-y-5"
+            onSubmit={(event) => {
+              void submitForm(event)
+            }}
+            onChange={handleChange}
           >
             <input type="hidden" name="form-name" value="support" />
             <p className="hidden">
@@ -32,10 +74,26 @@ export default function Support() {
               placeholder="https://www.strava.com/athletes/..."
             />
             <FieldTextarea label="How can we help?" name="message" rows={6} required />
-            <button type="submit" className="btn">
-              Send message
+            <button type="submit" className="btn" disabled={status === 'submitting'}>
+              {status === 'submitting' ? 'Sending…' : 'Send message'}
             </button>
           </form>
+          {status === 'success' && (
+            <p
+              className="rounded border border-retro-fern/40 bg-retro-fern/10 px-3 py-2 text-xs text-retro-fern"
+              aria-live="polite"
+            >
+              Thanks! We received your message and will follow up soon.
+            </p>
+          )}
+          {status === 'error' && (
+            <p
+              className="rounded border border-retro-rose/40 bg-retro-rose/10 px-3 py-2 text-xs text-retro-rose"
+              aria-live="assertive"
+            >
+              Something went wrong sending your message. Please try again or email support@lorg.app.
+            </p>
+          )}
         </section>
       </div>
     </div>
