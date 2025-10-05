@@ -66,7 +66,7 @@ export default function Header() {
               onClick={() => void handleLogout()}
               disabled={loggingOut}
             >
-              {loggingOut ? 'Logging out…' : 'Logout'}
+              {loggingOut ? 'LOGGING OUT…' : 'LOGOUT'}
             </button>
           ) : null}
         </nav>
