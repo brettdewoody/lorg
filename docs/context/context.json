@@ -1,0 +1,12 @@
+{
+  "bundle": "docs/context",
+  "primary": [
+    "docs/context/project-overview.md",
+    "docs/context/tech-stack.md",
+    "docs/context/process.md"
+  ],
+  "playbooks": [
+    "docs/context/playbook-refresh-strava-tokens.md"
+  ],
+  "tasks": "docs/context/tasks-open.md"
+}

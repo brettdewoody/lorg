@@ -61,6 +61,11 @@ See `docs/SCRIPTS.md` for a full script reference and the environment variables 
 - Install Lefthook (`npx lefthook install`) so your local hooks mirror CI (`format:check` on commit, `check` on push).
 - Install `git-secrets` and register the hooks (`git secrets --register-aws && git secrets --install`) to prevent secret leakage; see `docs/SECURITY.md`.
 
+## Context bundle
+
+- Start with `docs/context/index.md` for a high-level overview tailored to automated maintainers.
+- Additional playbooks and tasks live in `docs/context/`.
+
 ## Strava annotations
 
 - The background processor records a message such as `"3.1 new miles"` (or kilometers when the athlete’s measurement preference is metric).

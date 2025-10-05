@@ -45,5 +45,6 @@
 ## Open tasks
 
 - [ ] Roll out the updated Strava OAuth scope (`activity:write`) and prompt existing users to re-authorize so annotations can update descriptions.
-- [ ] Install Lefthook locally (`npx lefthook install`) so `format:check` (pre-commit) and `check`/`knip` (pre-push) run before sharing changes.
+- [ ] Install Lefthook locally (`npx lefthook install`) so `format:check` (pre-commit) and `check` (pre-push) run before sharing changes.
 - [ ] Install `git-secrets` and register repo hooks; add any additional secret patterns relevant to Lorg.
+- [ ] Review `docs/context/` periodically and update as processes evolve.
