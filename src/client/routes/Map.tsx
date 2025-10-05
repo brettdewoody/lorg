@@ -148,7 +148,7 @@ const parsePlaceFeatures = (value: unknown): PlaceFeature[] => {
 const isGeoJSONSource = (source: AnySourceImpl | undefined): source is GeoJSONSource =>
   Boolean(source && source.type === 'geojson')
 
-export default function Data() {
+export default function Map() {
   const [placeCounts, setPlaceCounts] = useState<Record<string, number>>({})
   const [placeStreaks, setPlaceStreaks] = useState<Record<string, PlaceStreak>>({})
   const [countsLoading, setCountsLoading] = useState(true)

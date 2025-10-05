@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 
 type SessionState = { authed: boolean }
@@ -50,18 +50,39 @@ export default function Header() {
           Lorg
         </Link>
         <nav className="flex gap-4 font-display text-[0.55rem] uppercase tracking-[0.35em] text-retro-ink/70 sm:gap-6 sm:text-[0.65rem]">
-          <Link className="transition hover:text-retro-sun" to="/">
+          <NavLink
+            className={({ isActive }) =>
+              `transition hover:text-retro-sun ${isActive ? 'text-retro-sun' : ''}`
+            }
+            to="/"
+            end
+          >
             Home
-          </Link>
-          <Link className="transition hover:text-retro-sun" to="/dashboard">
+          </NavLink>
+          <NavLink
+            className={({ isActive }) =>
+              `transition hover:text-retro-sun ${isActive ? 'text-retro-sun' : ''}`
+            }
+            to="/dashboard"
+          >
             Dashboard
-          </Link>
-          <Link className="transition hover:text-retro-sun" to="/data">
-            Data
-          </Link>
-          <Link className="transition hover:text-retro-sun" to="/support">
+          </NavLink>
+          <NavLink
+            className={({ isActive }) =>
+              `transition hover:text-retro-sun ${isActive ? 'text-retro-sun' : ''}`
+            }
+            to="/map"
+          >
+            Map
+          </NavLink>
+          <NavLink
+            className={({ isActive }) =>
+              `transition hover:text-retro-sun ${isActive ? 'text-retro-sun' : ''}`
+            }
+            to="/support"
+          >
             Support
-          </Link>
+          </NavLink>
           {!loading && isAuthed ? (
             <button
               type="button"

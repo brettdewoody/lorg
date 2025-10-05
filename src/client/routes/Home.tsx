@@ -77,7 +77,7 @@ export default function Home() {
           From now on every outdoor activity you record builds your world map. Lace up and earn
           fresh pixels.
         </p>
-        <Link className="btn" to="/data">
+        <Link className="btn" to="/map">
           View Progress
         </Link>
       </Center>
@@ -91,7 +91,7 @@ export default function Home() {
         You’ve mapped <strong>{me.activityCount}</strong> activities since joining. Keep exploring
         to unlock new segments.
       </p>
-      <Link className="btn" to="/data">
+      <Link className="btn" to="/map">
         View Progress
       </Link>
     </Center>
