@@ -58,7 +58,7 @@ See `docs/SCRIPTS.md` for a full script reference and the environment variables 
 
 - Run `npm run check` before committing; it verifies formatting, lint rules, TypeScript types, and unused code via Knip in one pass.
 - GitHub Actions runs the same command on every push and pull request.
-- Install Lefthook (`npx lefthook install`) so your local hooks mirror CI (`format:check` on commit, `check` on push).
+- Install Lefthook (`npm run hooks:install` or `npx lefthook install`) so your local hooks mirror CI (`format:check` on commit, `check` on push).
 - Install `git-secrets` and register the hooks (`git secrets --register-aws && git secrets --install`) to prevent secret leakage; see `docs/SECURITY.md`.
 
 ## Context bundle

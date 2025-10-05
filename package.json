@@ -11,6 +11,7 @@
     "lint:fix": "npm run lint -- --fix",
     "typecheck": "tsc --noEmit",
     "knip": "knip --config knip.json",
+    "hooks:install": "lefthook install",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run knip",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

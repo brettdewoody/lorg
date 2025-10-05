@@ -24,7 +24,7 @@
 2. Enable hooks in this repo:
 
    ```bash
-   npx lefthook install
+   npm run hooks:install
    ```
 
 3. Hooks run `npm run format:check` on commit and the full quality suite (`npm run check`) before push.
