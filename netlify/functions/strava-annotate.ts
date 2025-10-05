@@ -142,9 +142,21 @@ async function processAnnotation(row: PendingAnnotation): Promise<AnnotationResu
 
   const detail = (await detailRes.json()) as { description?: string }
   const annotation = row.annotation_text.trim()
-  const existing = detail.description?.trim() ?? ''
+  const originalDescription = detail.description ?? ''
 
-  if (existing.includes(annotation)) {
+  const stripExistingAnnotation = (description: string): string => {
+    const paragraphs = description.split(/\n{2,}/).map((p) => p.trim())
+    const kept = paragraphs.filter((para) => {
+      const normalized = para.trimStart()
+      return !normalized.startsWith('🗺️ Unlocked ')
+    })
+    return kept.join('\n\n').trim()
+  }
+
+  const baseDescription = stripExistingAnnotation(originalDescription).trim()
+  const description = baseDescription ? `${baseDescription}\n\n${annotation}` : annotation
+
+  if (originalDescription.trim() === description.trim()) {
     await markApplied(row.activity_id)
     return {
       activityId: row.activity_id,
@@ -153,8 +165,6 @@ async function processAnnotation(row: PendingAnnotation): Promise<AnnotationResu
       message: 'annotation already present',
     }
   }
-
-  const description = existing ? `${existing}\n\n${annotation}` : annotation
 
   const updateRes = await fetch(`${STRAVA_API_BASE}/activities/${row.strava_activity_id}`, {
     method: 'PUT',

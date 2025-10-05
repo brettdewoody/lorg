@@ -688,7 +688,7 @@ export const handler: Handler = async (event) => {
             measurementPref === 'meters'
               ? `${(novelMeters / 1000).toFixed(1)} new kilometers`
               : `${(novelMeters / 1609.34).toFixed(1)} new miles`
-          let message = `🗺️ Unlocked ${distanceText} in Lorg`
+          let message = `🗺️ Explored ${distanceText} in Lorg`
           if (newVisitedPlaces.length) {
             const maxNames = 3
             const names = newVisitedPlaces.map((place) => place.name)
