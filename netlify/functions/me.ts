@@ -104,6 +104,114 @@ export const handler: Handler = async (event) => {
         [userId],
       )
 
+      const checkInsRes = await client.query<{
+        id: string
+        visited_at: string
+        place_type: string
+        place_name: string
+        country_code: string
+        activity_id: string
+        strava_activity_id: string
+        activity_start: string
+        new_len_m: number
+        total_len_m: number
+        is_unlock: boolean
+      }>(
+        `
+        SELECT
+          pv.id,
+          pv.visited_at,
+          pb.place_type,
+          pb.name AS place_name,
+          pb.country_code,
+          a.id AS activity_id,
+          a.strava_activity_id,
+          a.start_date AS activity_start,
+          COALESCE(a.new_len_m, 0) AS new_len_m,
+          COALESCE(a.geom_len_m, 0) AS total_len_m,
+          COALESCE(vp.first_activity_id = pv.activity_id, false) AS is_unlock
+        FROM place_visit pv
+        JOIN place_boundary pb ON pb.id = pv.place_boundary_id
+        JOIN activity a ON a.id = pv.activity_id
+        LEFT JOIN visited_place vp
+          ON vp.user_id = pv.user_id AND vp.place_boundary_id = pv.place_boundary_id
+        WHERE pv.user_id = $1
+        ORDER BY pv.visited_at DESC
+        LIMIT 25
+        `,
+        [userId],
+      )
+
+      const returnStreaksRes = await client.query<{
+        place_boundary_id: number
+        place_name: string
+        place_type: string
+        country_code: string
+        streak_weeks: number
+        streak_end: string
+      }>(
+        `
+        WITH weekly AS (
+          SELECT
+            pv.place_boundary_id,
+            DATE_TRUNC('week', pv.visited_at)::date AS week_start
+          FROM place_visit pv
+          WHERE pv.user_id = $1
+          GROUP BY pv.place_boundary_id, week_start
+        ),
+        numbered AS (
+          SELECT
+            place_boundary_id,
+            week_start,
+            ROW_NUMBER() OVER (PARTITION BY place_boundary_id ORDER BY week_start DESC) AS rn_desc,
+            (EXTRACT(YEAR FROM week_start)::int * 100 + EXTRACT(WEEK FROM week_start)::int) AS week_number
+          FROM weekly
+        ),
+        grouped AS (
+          SELECT
+            place_boundary_id,
+            week_start,
+            rn_desc,
+            week_number,
+            week_number - rn_desc AS grp
+          FROM numbered
+        ),
+        streaks AS (
+          SELECT
+            place_boundary_id,
+            MIN(week_start) AS streak_start,
+            MAX(week_start) AS streak_end,
+            COUNT(*) AS streak_weeks
+          FROM grouped
+          GROUP BY place_boundary_id, grp
+        ),
+        latest AS (
+          SELECT place_boundary_id, MAX(week_start) AS latest_week
+          FROM weekly
+          GROUP BY place_boundary_id
+        ),
+        current AS (
+          SELECT s.place_boundary_id, s.streak_end, s.streak_weeks
+          FROM streaks s
+          JOIN latest l
+            ON l.place_boundary_id = s.place_boundary_id
+           AND s.streak_end = l.latest_week
+        )
+        SELECT
+          pb.id AS place_boundary_id,
+          pb.name AS place_name,
+          pb.place_type,
+          pb.country_code,
+          current.streak_weeks,
+          current.streak_end
+        FROM current
+        JOIN place_boundary pb ON pb.id = current.place_boundary_id
+        ORDER BY current.streak_weeks DESC, current.streak_end DESC, pb.name ASC
+        LIMIT 5
+        `,
+        [userId],
+      )
+
       const totalNewMeters = Number(totalNewDistance.rows[0]?.total ?? 0)
       const milestoneData = buildMilestones(totalNewMeters)
 
@@ -125,6 +233,27 @@ export const handler: Handler = async (event) => {
         })),
         milestones: milestoneData,
         measurementPreference,
+        checkIns: checkInsRes.rows.map((row) => ({
+          id: row.id,
+          visitedAt: row.visited_at,
+          placeType: row.place_type,
+          placeName: row.place_name,
+          countryCode: row.country_code,
+          activityId: row.activity_id,
+          stravaActivityId: row.strava_activity_id,
+          activityStart: row.activity_start,
+          newMeters: Number(row.new_len_m ?? 0),
+          totalMeters: Number(row.total_len_m ?? 0),
+          isUnlock: Boolean(row.is_unlock),
+        })),
+        returnStreaks: returnStreaksRes.rows.map((row) => ({
+          placeBoundaryId: row.place_boundary_id,
+          placeName: row.place_name,
+          placeType: row.place_type,
+          countryCode: row.country_code,
+          weeks: Number(row.streak_weeks ?? 0),
+          lastWeekStart: row.streak_end,
+        })),
       }
     })
 
@@ -142,6 +271,9 @@ export const handler: Handler = async (event) => {
       },
       latestActivities: stats.latestActivities,
       milestones: stats.milestones,
+      checkIns: stats.checkIns,
+      unlockFeed: stats.checkIns.filter((item) => item.isUnlock).slice(0, 10),
+      returnStreaks: stats.returnStreaks,
     })
   } catch (err: unknown) {
     const statusCode =

@@ -28,6 +28,28 @@ type DashboardActivity = {
   annotation: string | null
 }
 
+type DashboardCheckIn = {
+  id: string
+  visitedAt: string
+  placeType: string
+  placeName: string
+  countryCode: string
+  stravaActivityId: string
+  activityStart: string
+  newMeters: number
+  totalMeters: number
+  isUnlock: boolean
+}
+
+type DashboardReturnStreak = {
+  placeBoundaryId: number
+  placeName: string
+  placeType: string
+  countryCode: string
+  weeks: number
+  lastWeekStart: string
+}
+
 type DashboardPayload = {
   authed: boolean
   activityCount: number
@@ -38,6 +60,9 @@ type DashboardPayload = {
     achieved: DashboardMilestone[]
     next: DashboardNextMilestone | null
   }
+  checkIns?: DashboardCheckIn[]
+  unlockFeed?: DashboardCheckIn[]
+  returnStreaks?: DashboardReturnStreak[]
 }
 
 const metersToMiles = (meters: number) => meters / 1_609.34
@@ -100,6 +125,40 @@ const formatActivityDistance = (meters: number, preference: MeasurementPreferenc
   formatDistanceByPreference(meters, preference)
 
 const formatDate = (iso: string) => new Date(iso).toLocaleString()
+const formatDateTime = (iso: string) =>
+  new Date(iso).toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  })
+
+const formatWeekStart = (iso: string) =>
+  new Date(iso).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+  })
+
+const placeTypeLabels: Record<string, string> = {
+  country: 'Country',
+  state: 'State/Province',
+  county: 'County',
+  city: 'City',
+  lake: 'Lake',
+  peak: 'Peak',
+}
+
+const describePlaceType = (placeType: string) => placeTypeLabels[placeType] ?? placeType
+
+const formatCheckInDistance = (
+  meters: number,
+  fallbackMeters: number,
+  preference: MeasurementPreference,
+) => {
+  if (meters > 0) return formatDistanceByPreference(meters, preference)
+  if (fallbackMeters > 0) return formatDistanceByPreference(fallbackMeters, preference)
+  return null
+}
 
 export default function Dashboard() {
   const [payload, setPayload] = useState<DashboardPayload | null>(null)
@@ -149,6 +208,9 @@ export default function Dashboard() {
   const stats = payload.stats
   const latest = payload.latestActivities ?? []
   const nextMilestone = payload.milestones?.next ?? null
+  const checkIns = payload.checkIns ?? []
+  const unlockFeed = payload.unlockFeed ?? []
+  const returnStreaks = payload.returnStreaks ?? []
   const measurementPreference = resolveMeasurementPreference(payload.measurementPreference)
 
   return (
@@ -242,6 +304,110 @@ export default function Dashboard() {
                       {formatActivityDistance(activity.newMeters, measurementPreference)}
                     </span>
                     {activity.annotation ? <span>{activity.annotation}</span> : null}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="grid gap-4 lg:grid-cols-2">
+          <div className="space-y-3">
+            <h3 className="font-display text-xs uppercase tracking-[0.3em] text-retro-sun">
+              Recent check-ins
+            </h3>
+            {checkIns.length === 0 ? (
+              <p className="text-sm text-retro-ink/60">
+                Unlock a new place to start your check-in streaks.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {checkIns.slice(0, 6).map((checkIn) => {
+                  const distanceText = formatCheckInDistance(
+                    checkIn.newMeters,
+                    checkIn.totalMeters,
+                    measurementPreference,
+                  )
+                  return (
+                    <li
+                      key={checkIn.id}
+                      className="rounded border border-retro-sun/30 bg-retro-panel/60 px-4 py-3 text-sm shadow-[2px_2px_0_#10261B]"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-semibold text-retro-ink">{checkIn.placeName}</span>
+                        <span className="text-retro-ink/60">
+                          {formatDateTime(checkIn.visitedAt)}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-retro-ink/70">
+                        <span>{describePlaceType(checkIn.placeType)}</span>
+                        {distanceText ? <span>{distanceText}</span> : null}
+                        <span className="font-semibold text-retro-sun">
+                          {checkIn.isUnlock ? 'Unlocked!' : 'Check-in'}
+                        </span>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
+          </div>
+          <div className="space-y-3">
+            <h3 className="font-display text-xs uppercase tracking-[0.3em] text-retro-sun">
+              Return streaks
+            </h3>
+            {returnStreaks.length === 0 ? (
+              <p className="text-sm text-retro-ink/60">
+                Visit a place more than once to build a streak.
+              </p>
+            ) : (
+              <ul className="space-y-3">
+                {returnStreaks.map((streak) => (
+                  <li
+                    key={streak.placeBoundaryId}
+                    className="rounded border border-retro-sun/30 bg-retro-panel/60 px-4 py-3 text-sm shadow-[2px_2px_0_#10261B]"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="font-semibold text-retro-ink">{streak.placeName}</span>
+                      <span className="text-retro-ink/60">
+                        Week of {formatWeekStart(streak.lastWeekStart)}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-retro-ink/70">
+                      <span>{describePlaceType(streak.placeType)}</span>
+                      <span className="font-semibold text-retro-sun">
+                        {streak.weeks} week{streak.weeks === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        <section className="space-y-3">
+          <h3 className="font-display text-xs uppercase tracking-[0.3em] text-retro-sun">
+            Recent unlocks
+          </h3>
+          {unlockFeed.length === 0 ? (
+            <p className="text-sm text-retro-ink/60">No new unlocks yet. Chase fresh territory!</p>
+          ) : (
+            <ul className="space-y-3">
+              {unlockFeed.slice(0, 6).map((unlock) => (
+                <li
+                  key={unlock.id}
+                  className="rounded border border-retro-sun/30 bg-retro-panel/60 px-4 py-3 text-sm shadow-[2px_2px_0_#10261B]"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="font-semibold text-retro-ink">{unlock.placeName}</span>
+                    <span className="text-retro-ink/60">{formatDateTime(unlock.visitedAt)}</span>
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-retro-ink/70">
+                    <span>{describePlaceType(unlock.placeType)}</span>
+                    <span>
+                      {formatDistanceByPreference(unlock.newMeters, measurementPreference)} new
+                    </span>
                   </div>
                 </li>
               ))}

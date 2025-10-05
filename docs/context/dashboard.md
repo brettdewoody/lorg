@@ -1,14 +1,16 @@
 # Dashboard & Achievements
 
 ## Current experience
-- `/dashboard` fetches `/me` for a consolidated payload (auth state, activity stats, recent unlocks).
+- `/dashboard` fetches `/me` for a consolidated payload (auth state, stats, check-ins, streaks).
 - Distances respect the athlete’s Strava measurement preference. We persist it on `app_user.measurement_preference` and default to imperial if unset.
 - Cards include activity count, seven-day exploration, lifetime exploration, next milestone, and the most recent milestone unlocked.
 - Recent activities list the past five processed uploads with new-distance totals and generated annotations when available.
+- Recent check-ins stream the latest place visits (including re-visits); unlock feed highlights first-time visits.
+- Return streaks surface the top places you’ve visited in consecutive weeks.
 
 ## Backend notes
-- `netlify/functions/me.ts` aggregates activity counts, recent distance, milestones, and latest activities. It now selects the stored measurement preference so the client can format units consistently.
-- `activity-process-background.ts` captures `detail.athlete.measurement_preference` on every run and updates `app_user.measurement_preference` when present.
+- `activity-process-background.ts` captures `detail.athlete.measurement_preference` on every run, updates `app_user.measurement_preference`, inserts into `place_visit`, and still handles unlock detection for `visited_place`.
+- `netlify/functions/me.ts` aggregates metrics, milestone summaries, recent check-ins/unlocks (from `place_visit`), and weekly return streaks. It filters virtual activities out of totals.
 - Static milestone thresholds live in `me.ts` for now. When we move to a dedicated `user_milestone` table, update this doc and the handler accordingly.
 
 ## UI implementation

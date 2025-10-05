@@ -18,4 +18,4 @@
 
 - **Deployment**
   - Netlify auto-builds on main; ensure `npm run build` succeeds locally when touching backend.
-  - Supabase migrations live in `db/migrations/`—run manually via `psql` when needed (apply new files like `003_add_measurement_preference.sql` and `004_add_peak_place_type.sql` before loading peaks in any environment).
+  - Supabase migrations live in `db/migrations/`—run manually via `psql` when needed (apply new files like `003_add_measurement_preference.sql`, `004_add_peak_place_type.sql`, and `005_add_place_visit.sql` before loading peaks or relying on check-in streaks in any environment).

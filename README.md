@@ -139,7 +139,7 @@ STRAVA_DEV_REFRESH_TOKEN=...
 
 ## Place boundary data
 
-- Run the migrations in `db/migrations/` so `place_boundary`, `visited_place`, and the newer helpers (measurement preference column, `peak` type) exist. Locally: `psql -f db/migrations/001_init.sql` then apply `002_…`, `003_…`, `004_…` in sequence after exporting your `.env`.
+- Run the migrations in `db/migrations/` so `place_boundary`, `visited_place`, and the newer helpers (measurement preference column, `peak` type, `place_visit`) exist. Locally: `psql -f db/migrations/001_init.sql` then apply `002_…`, `003_…`, `004_…`, `005_…` in sequence after exporting your `.env`.
 - Load simplified polygons for the regions you support (countries, states/provinces, counties, cities, lakes, peaks) into `place_boundary`. Natural Earth, ONS, and DoBIH datasets work well; keep geometries in `SRID 4326`.
 - After loading the GeoJSON via `npm run places:load`, new activities automatically record unlocked places—no backfill runs by default. For Supabase or other hosted Postgres instances, set `PGSSLMODE=require` (or include `?sslmode=require` on `DATABASE_URL`) so the loader uses SSL.
 

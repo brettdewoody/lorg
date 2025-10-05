@@ -695,6 +695,27 @@ export const handler: Handler = async (event) => {
               }
             }
           }
+
+          if (typeof activityRowId === 'string' && places.rowCount) {
+            const visitActivityId = activityRowId
+            const visitValues: (string | number)[] = []
+            const visitPlaceholders: string[] = []
+            places.rows.forEach((row, idx) => {
+              visitValues.push(userId, row.id, visitActivityId, startDate)
+              visitPlaceholders.push(
+                `($${idx * 4 + 1}, $${idx * 4 + 2}, $${idx * 4 + 3}, $${idx * 4 + 4})`,
+              )
+            })
+
+            if (visitValues.length) {
+              await c.query(
+                `INSERT INTO place_visit (user_id, place_boundary_id, activity_id, visited_at)
+                 VALUES ${visitPlaceholders.join(',')}
+                 ON CONFLICT DO NOTHING`,
+                visitValues,
+              )
+            }
+          }
         }
 
         if (shouldAnnotate) {
