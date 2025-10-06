@@ -17,5 +17,5 @@
   - Branch protection should require CI to pass before merge.
 
 - **Deployment**
-  - Netlify auto-builds on main; ensure `npm run build` succeeds locally when touching backend.
+  - Netlify auto-builds on main; ensure `npm run build` succeeds locally when touching backend. CI now runs `npm run check`, `npm run test -- --run`, and `npm run build` on every push/PR, so expect failures if tests or builds regress.
   - Supabase migrations live in `db/migrations/`—run manually via `psql` when needed (apply new files like `003_add_measurement_preference.sql`, `004_add_peak_place_type.sql`, and `005_add_place_visit.sql` before loading peaks or relying on check-in streaks in any environment).
