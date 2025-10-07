@@ -15,20 +15,29 @@ export const buildAnnotationMessage = ({
   places = [],
 }: BuildMessageOptions): string => {
   const pref = measurementPref?.toLowerCase()
-  const distanceText =
-    pref === 'meters'
-      ? `${(novelMeters / 1000).toFixed(1)} new kilometers`
-      : `${(novelMeters / 1609.34).toFixed(1)} new miles`
+  const lines: string[] = []
 
-  let message = `🗺️ Explored ${distanceText} in Lorg`
+  if (novelMeters > 0) {
+    const primaryText =
+      pref === 'meters'
+        ? `${(novelMeters / 1000).toFixed(1)} new kilometers`
+        : `${(novelMeters / 1609.34).toFixed(1)} new miles`
+    lines.push(`🗺️ Explored ${primaryText}`)
+  }
+
   if (places.length) {
     const maxNames = 3
     const names = places.map((place) => place.name)
     const headline = names.slice(0, maxNames).join(', ')
     const extras = names.length > maxNames ? `, +${names.length - maxNames} more` : ''
-    message += `. 📍 New places: ${headline}${extras}`
+    lines.push(`📍 New Places: ${headline}${extras}`)
   }
-  return message
+
+  if (lines.length) {
+    lines.push('-- via Lorg')
+  }
+
+  return lines.join('\n')
 }
 
 const isLorgAnnotationParagraph = (paragraph: string): boolean => {
