@@ -719,11 +719,12 @@ export const handler: Handler = async (event) => {
         }
 
         if (shouldAnnotate) {
-          annotationText = buildAnnotationMessage({
+          const builtAnnotation = buildAnnotationMessage({
             novelMeters,
             measurementPref: measurementPreference,
             places: newVisitedPlaces,
           })
+          annotationText = builtAnnotation.trim().length ? builtAnnotation : null
         } else {
           annotationText = null
         }

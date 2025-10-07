@@ -38,9 +38,15 @@ This runs Vite and Netlify Functions via `netlify dev`. Install the Netlify CLI 
 
 6. Deploy:
 
-- Push to GitHub
-- Connect the repo in Netlify
-- Set environment variables in Netlify UI
+- Default flow: push feature branches and open PRs into `development`. Netlify publishes that branch at https://development--lorg.netlify.app (HTTP Basic Auth required).
+- When ready to release, merge `development` into `main`; Netlify deploys main to production.
+- Configure environment variables for both contexts in Netlify. Use `[context.branch-deploy.environment]` in `netlify.toml` if dev needs different credentials.
+
+## Deployment environments
+
+- **Production**: `main` → https://lorg.netlify.app
+- **Development**: `development` → https://development--lorg.netlify.app (basic auth; credentials managed in Netlify env vars)
+- **Pull requests**: Netlify Deploy Previews remain enabled for every PR so reviewers see the exact diff
 
 ## Postgres
 
@@ -65,7 +71,7 @@ See `docs/SCRIPTS.md` for a full script reference and the environment variables 
 ## Development checks
 
 - Run `npm run check` before committing; it verifies formatting, lint rules, TypeScript types, and unused code via Knip in one pass.
-- GitHub Actions runs the same command on every push and pull request.
+- GitHub Actions runs `npm run check`, `npm run test -- --run`, and `npm run build` on every push/PR.
 - Install Lefthook (`npm run hooks:install` or `npx lefthook install`) so your local hooks mirror CI (`format:check` on commit, `check` on push).
 - Install `git-secrets` and register the hooks (`git secrets --register-aws && git secrets --install`) to prevent secret leakage; see `docs/SECURITY.md`.
 
