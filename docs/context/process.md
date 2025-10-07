@@ -13,9 +13,9 @@
   - `git secrets --register-aws && git secrets --install` enables secret scanning.
 
 - **CI**
-  - `.github/workflows/ci.yml` runs `npm ci` + `npm run check` on push & PR.
-  - Branch protection should require CI to pass before merge.
+  - `.github/workflows/ci.yml` runs `npm run check`, `npm run test -- --run`, and `npm run build` on push & PR.
+  - Branch protection should require CI to pass on both `development` and `main` before merge.
 
 - **Deployment**
-  - Netlify auto-builds on main; ensure `npm run build` succeeds locally when touching backend. CI now runs `npm run check`, `npm run test -- --run`, and `npm run build` on every push/PR, so expect failures if tests or builds regress.
+  - Netlify auto-builds `main` (production). `development` is published as https://development--lorg.netlify.app with HTTP basic auth via the branch-deploy context; credentials live in Netlify environment variables.
   - Supabase migrations live in `db/migrations/`—run manually via `psql` when needed (apply new files like `003_add_measurement_preference.sql`, `004_add_peak_place_type.sql`, and `005_add_place_visit.sql` before loading peaks or relying on check-in streaks in any environment).
