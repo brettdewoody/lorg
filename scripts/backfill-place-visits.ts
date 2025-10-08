@@ -15,7 +15,11 @@ async function backfill(): Promise<void> {
   try {
     let offset = 0
     for (;;) {
-      const { rows: activities } = await client.query<{ id: string; user_id: string; start_date: string }>(
+      const { rows: activities } = await client.query<{
+        id: string
+        user_id: string
+        start_date: string
+      }>(
         `
         SELECT id, user_id, start_date
         FROM activity
@@ -29,6 +33,21 @@ async function backfill(): Promise<void> {
       if (!activities.length) break
 
       for (const activity of activities) {
+        await client.query(
+          `
+          INSERT INTO visited_place (user_id, place_boundary_id, first_activity_id, visited_at)
+          SELECT $1, pb.id, $2, $3
+          FROM place_boundary pb
+          WHERE pb.geom && (SELECT ST_Envelope(geom) FROM activity WHERE id = $2)
+            AND ST_Intersects(
+              pb.geom,
+              (SELECT COALESCE(novel_geom, geom) FROM activity WHERE id = $2)
+            )
+          ON CONFLICT DO NOTHING
+          `,
+          [activity.user_id, activity.id, activity.start_date],
+        )
+
         await client.query(
           `
           INSERT INTO place_visit (user_id, place_boundary_id, activity_id, visited_at)
@@ -50,7 +69,9 @@ async function backfill(): Promise<void> {
 
       offset += activities.length
       if (activities.length < BATCH_SIZE) break
+      console.log(`Processed ${offset} activities…`)
     }
+    console.log('place_visit backfill complete')
   } finally {
     client.release()
     await pool.end()
@@ -58,9 +79,7 @@ async function backfill(): Promise<void> {
 }
 
 backfill()
-  .then(() => {
-    console.log('place_visit backfill complete')
-  })
+  .then(() => {})
   .catch((err: unknown) => {
     console.error('place_visit backfill failed', err)
     exit(1)
