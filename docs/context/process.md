@@ -18,4 +18,5 @@
 
 - **Deployment**
   - Netlify auto-builds `main` (production). `development` is published as https://development--lorg.netlify.app with HTTP basic auth via the branch-deploy context; credentials live in Netlify environment variables.
-  - Supabase migrations live in `db/migrations/`—run manually via `psql` when needed (apply new files like `003_add_measurement_preference.sql`, `004_add_peak_place_type.sql`, and `005_add_place_visit.sql` before loading peaks or relying on check-in streaks in any environment).
+- Supabase migrations live in `db/migrations/`—run manually via `psql` when needed (apply new files like `003_add_measurement_preference.sql`, `004_add_peak_place_type.sql`, and `005_add_place_visit.sql` before loading peaks or relying on check-in streaks in any environment).
+  - A one-time `npm run places:backfill` (Postgres-only) replays past activities to populate `visited_place`/`place_visit` whenever new place types are added.
