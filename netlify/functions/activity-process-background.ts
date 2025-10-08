@@ -652,7 +652,6 @@ export const handler: Handler = async (event) => {
         }
 
         if (maskedGeoJSONString) {
-          const supportedCountries = ['US', 'CA', 'GB']
           const places = await c.query<{ id: number; place_type: string; name: string }>(
             `
             WITH activity_geom AS (
@@ -661,11 +660,10 @@ export const handler: Handler = async (event) => {
             SELECT pb.id, pb.place_type, pb.name
             FROM place_boundary pb
             JOIN activity_geom ag ON
-              pb.country_code = ANY($2::text[])
-              AND pb.geom && ST_Envelope(ag.geom)
+              pb.geom && ST_Envelope(ag.geom)
               AND ST_Intersects(pb.geom, ag.geom)
             `,
-            [maskedGeoJSONString, supportedCountries],
+            [maskedGeoJSONString],
           )
 
           if (places.rowCount) {

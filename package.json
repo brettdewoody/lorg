@@ -22,6 +22,7 @@
     "fixtures:compare": "node scripts/compare-novel-metrics.mjs",
     "assets:build": "npx tsx scripts/generate-assets.ts",
     "places:load": "tsx scripts/load-places.ts",
+    "places:backfill": "tsx scripts/backfill-place-visits.ts",
     "annotate:test": "node scripts/annotate-test.mjs"
   },
   "dependencies": {
